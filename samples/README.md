@@ -23,7 +23,7 @@ Two clips of the same task. Put them here as `expert.mp4` and `trainee.mp4`.
 ## Filming
 - Phone propped or on a tripod so it doesn't move, landscape, good light
 - Frame the open case and your hands; keep the slot and latches visible
-- Do each action slowly and deliberately. The model samples a couple of frames
+- Do each action slowly and deliberately. The model appears to sample only a few frames
   per second, so a half-second action can be missed
 - 1–2 minutes per clip, MP4, 720p is plenty
 - Nothing personal in frame (screens, mail, faces): this repo is public
