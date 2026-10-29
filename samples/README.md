@@ -16,9 +16,13 @@ Two clips of the same task. Put them here as `expert.mp4` and `trainee.mp4`.
 9. Put the side panel back on and plug the power back in
 
 ### Trainee run (`trainee.mp4`), no narration, make these mistakes
-- **Skip step 3** (no grounding)
-- **Swap steps 1 and 4**: open the panel while the power cable is still plugged in
-- **Leave one latch open** in step 8: press until only one side clicks
+- **Skip step 3 on camera**: ground yourself *before* you start recording, so the
+  RAM is protected but the video never shows it
+- **Swap the order of steps 1 and 4**: with the PC already shut down, take the side
+  panel off *first*, then switch off and unplug the PSU. Always unplug before you
+  touch the RAM
+- **Leave one latch open** in step 8: press until only one side clicks (then fix it
+  after you stop recording, before powering on)
 
 ## Filming
 - Phone propped or on a tripod so it doesn't move, landscape, good light
