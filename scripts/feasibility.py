@@ -10,6 +10,7 @@ Writes the extracted procedure and the audit to out/ and prints a report.
 import argparse
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -97,6 +98,36 @@ Reference procedure:
 {procedure}"""
 
 
+def prepare(src, slow, workdir):
+    """Re-encode any phone video (.mov, HEVC, ...) to 720p H.264 MP4.
+
+    Muse Spark samples roughly one frame per second of video time, so a quick
+    action can fall between samples. Slowing the clip down by `slow` makes it
+    see `slow` times as many real-world moments, at `slow` times the tokens.
+    """
+    dst = Path(workdir) / f"{Path(src).stem}_x{slow}.mp4"
+    tempo, chain = 1 / slow, []
+    while tempo < 0.5:  # atempo only accepts factors >= 0.5, so chain them
+        chain.append("atempo=0.5")
+        tempo /= 0.5
+    chain.append(f"atempo={tempo:.6f}")
+    subprocess.run(
+        ["ffmpeg", "-loglevel", "error", "-y", "-i", src,
+         "-vf", f"scale=-2:720,setpts={slow}*PTS", "-af", ",".join(chain),
+         "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", str(dst)],
+        check=True,
+    )
+    return dst
+
+
+def unslow(items, slow):
+    """Map timestamps from the slowed clip back to the original recording."""
+    for it in items:
+        for k in ("start_s", "end_s"):
+            if it[k] is not None:
+                it[k] = round(it[k] / slow, 1)
+
+
 def upload(client, path):
     with open(path, "rb") as f:
         return client.files.create(file=f, purpose="user_data").id
@@ -105,7 +136,7 @@ def upload(client, path):
 def ask(client, file_id, prompt, schema, name):
     r = client.responses.create(
         model=MODEL,
-        max_output_tokens=16000,
+        max_output_tokens=32000,
         input=[{
             "type": "message",
             "role": "user",
@@ -128,6 +159,8 @@ def main():
     ap.add_argument("expert")
     ap.add_argument("trainee")
     ap.add_argument("--out", default="out")
+    ap.add_argument("--slow", type=int, default=3,
+                    help="slow clips down N times so quick actions are not missed")
     args = ap.parse_args()
 
     key = os.environ.get("META_API_KEY")
@@ -138,10 +171,13 @@ def main():
     out.mkdir(exist_ok=True)
 
     tokens_in = tokens_out = 0
-    expert_id, trainee_id = upload(client, args.expert), upload(client, args.trainee)
+    expert = prepare(args.expert, args.slow, out)
+    trainee = prepare(args.trainee, args.slow, out)
+    expert_id, trainee_id = upload(client, expert), upload(client, trainee)
     try:
         procedure, usage = ask(client, expert_id, EXTRACT_PROMPT, PROCEDURE_SCHEMA, "procedure")
         tokens_in, tokens_out = usage.input_tokens, usage.output_tokens
+        unslow(procedure["steps"], args.slow)
         (out / "procedure.json").write_text(json.dumps(procedure, indent=2))
 
         print(f"\nPROCEDURE: {procedure['task']}")
@@ -149,10 +185,13 @@ def main():
             flag = " [critical]" if s["critical"] else ""
             print(f"  {s['id']:>2}. {fmt_t(s['start_s'])}  {s['title']}{flag}")
 
-        prompt = AUDIT_PROMPT.format(procedure=json.dumps(procedure["steps"], indent=2))
+        reference = [{k: v for k, v in s.items() if k not in ("start_s", "end_s")}
+                     for s in procedure["steps"]]
+        prompt = AUDIT_PROMPT.format(procedure=json.dumps(reference, indent=2))
         audit, usage = ask(client, trainee_id, prompt, AUDIT_SCHEMA, "audit")
         tokens_in += usage.input_tokens
         tokens_out += usage.output_tokens
+        unslow(audit["steps"], args.slow)
         (out / "audit.json").write_text(json.dumps(audit, indent=2))
     finally:
         client.files.delete(expert_id)

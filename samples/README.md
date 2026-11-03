@@ -27,11 +27,13 @@ Two clips of the same task. Put them here as `expert.mp4` and `trainee.mp4`.
 ## Filming
 - Phone propped or on a tripod so it doesn't move, landscape, good light
 - Frame the open case and your hands; keep the slot and latches visible
-- Do each action slowly and deliberately. The model appears to sample only a few frames
-  per second, so a half-second action can be missed
+- Do each action deliberately and pause about a second after each step. Muse Spark
+  sees roughly one frame per second of video (measured); the script slows clips
+  down 3x before sending them, but a pause still helps
 - 1–2 minutes per clip, MP4, 720p is plenty
 - Nothing personal in frame (screens, mail, faces): this repo is public
 
 ## Uploading
-GitHub web upload (Add file → Upload files) takes files up to 25 MB.
-If a clip is bigger, re-export it at 720p or trim it.
+Phone clips are usually over GitHub's 25 MB web-upload limit, so attach them to
+the `test-clips` release instead (up to 2 GB per file, any format):
+https://github.com/godlynot/meta/releases/new
