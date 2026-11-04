@@ -85,7 +85,8 @@ Break the procedure into its distinct, ordered steps. A step is one physical act
 visible outcome (e.g. "unplug the power cable", "press the module until both latches click").
 For each step give the time range in seconds where it happens, the physical objects involved
 (short noun phrases a segmentation model could find, most important first, e.g. "RAM stick",
-"slot latch"), and whether skipping it would cause damage, danger or failure (critical).
+"slot latch"), and whether it is critical. Critical means skipping or botching it causes
+damage, injury or a failed result; most steps in a procedure are not critical.
 Use the narration to understand intent, but only include steps you can see being performed.
 Write titles as short imperatives ("Close both jars")."""
 

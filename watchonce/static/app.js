@@ -7,6 +7,8 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => (
 const tc = (s) => s == null ? "--:--.-"
   : `${String(Math.floor(s / 60)).padStart(2, "0")}:${(s % 60).toFixed(1).padStart(4, "0")}`;
 const two = (n) => String(n).padStart(2, "0");
+// Bundled samples are named like "skipped-jelly"; show that as "Skipped jelly".
+const pretty = (slug) => slug.charAt(0).toUpperCase() + slug.slice(1).replace(/[-_]+/g, " ");
 
 const LABEL = { done: "Correct", skipped: "Skipped", out_of_order: "Wrong order", incorrect: "Done wrong", uncertain: "Unclear" };
 let procedure = null;
@@ -92,7 +94,7 @@ async function loadProcedure(pid) {
         <span class="timecode">${tc(s.start_s)}</span>
       </span>
       <span class="body">
-        <span class="label">STEP ${two(s.id)}${s.critical ? ' <span class="critical">Critical</span>' : ""}</span>
+        <span class="label"><span class="step-no">STEP ${two(s.id)}</span>${s.critical ? ' <span class="critical">Critical</span>' : ""}</span>
         <span class="title">${esc(s.title)}</span>
       </span>
     </button></li>`).join("");
@@ -110,30 +112,30 @@ async function loadSampleAttempts() {
   const samples = await api("/api/samples");
   const mine = samples.find((s) => s.id === procedure.id);
   $("sample-attempts").replaceChildren(...(mine ? mine.attempts : []).map((aid) =>
-    sampleButton(`Sample attempt: ${aid}`, () =>
+    sampleButton(`Sample: ${pretty(aid)}`, () =>
       loadReport(aid).catch((e) => showProgress($("check-progress"), e.message, true)))));
 }
 
 function issueCard(s) {
   const ref = procedure.steps.find((x) => x.id === s.id);
   const when = s.status === "skipped"
-    ? `Never happened · noticed at ${tc(s.alert_s)}`
-    : `At ${tc(s.start_s)} in the attempt`;
+    ? `Never done. A coach would notice at ${tc(s.alert_s)}.`
+    : `Happens at ${tc(s.start_s)} in the attempt.`;
   const yours = s.frame
     ? `<figure><img src="${report.media}/${esc(s.frame)}" alt="Frame from the attempt">
-         <figcaption class="label">The attempt${s.outlined ? " · outlined by SAM 3.1" : ""}</figcaption></figure>`
+         <figcaption class="label">${s.outlined ? "The attempt, with SAM 3.1's outline" : "The attempt"}</figcaption></figure>`
     : "";
   const expert = ref
     ? `<figure><video src="${procedure.media}/expert.mp4#t=${ref.start_s},${ref.end_s}" poster="${procedure.media}/${esc(ref.frame)}"
          controls playsinline preload="none"></video>
-         <figcaption class="label">How the expert does it · ${tc(ref.start_s)}</figcaption></figure>`
+         <figcaption class="label">The expert doing it right</figcaption></figure>`
     : "";
   return `<article class="issue">
     <div class="issue-head">
       <span class="stamp ${s.status}">${LABEL[s.status]}</span>
       ${s.critical ? '<span class="critical">Critical</span>' : ""}
       ${agreement(s.agreement)}
-      <h4>Step ${two(s.id)} · ${esc(s.title)}</h4>
+      <h4>Step ${s.id}: ${esc(s.title)}</h4>
     </div>
     <div class="meta">${when}</div>
     <p>${esc(s.evidence)}</p>
@@ -151,7 +153,7 @@ async function loadReport(aid, scroll = true) {
   const unclear = steps.length - ok - issues.length;
   $("score").innerHTML = `${ok}<small>/${steps.length}</small>`;
   $("score-main").textContent = "steps done right";
-  $("score-sub").textContent = [`${issues.length} to fix`, unclear ? `${unclear} unclear` : ""].filter(Boolean).join(" · ");
+  $("score-sub").textContent = `${issues.length} to fix` + (unclear ? `, ${unclear} unclear` : "");
   const video = $("attempt-video");
   video.src = `${report.media}/attempt.mp4`;
   video.poster = `${report.media}/poster.jpg`;
@@ -160,13 +162,13 @@ async function loadReport(aid, scroll = true) {
     : "<p>Nothing to fix. Every step was done correctly and in order.</p>";
   $("checklist").innerHTML = steps.map((s) => `
     <li>
-      <span class="n">${two(s.id)}</span>
+      <span class="n step-no">${two(s.id)}</span>
       <span class="what">${esc(s.title)} <span class="stamp ${s.status}">${LABEL[s.status]}</span></span>
       ${agreement(s.agreement)}
     </li>`).join("");
   $("extras").innerHTML = report.extra_actions.length
     ? `<h3>Not in the procedure</h3><ul>${report.extra_actions.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : "";
-  $("cost").textContent = `${report.votes} independent checks by Muse Spark · analysis cost about $${report.cost_usd.toFixed(2)}`;
+  $("cost").textContent = `Checked ${report.votes} times by Muse Spark. This analysis cost about $${report.cost_usd.toFixed(2)}.`;
   $("report").hidden = false;
   setUrl();
   if (scroll) $("report").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -258,7 +260,7 @@ $("replay").onclick = replay;
 
 (async () => {
   const samples = await api("/api/samples").catch(() => []);
-  $("sample-procedures").replaceChildren(...samples.map((s) => sampleButton(`Try the sample: ${s.task}`, () =>
+  $("sample-procedures").replaceChildren(...samples.map((s) => sampleButton(`Load sample: ${pretty(s.id)}`, () =>
     loadProcedure(s.id).catch((e) => showProgress($("teach-progress"), e.message, true)))));
   const q = new URLSearchParams(location.search);
   try {

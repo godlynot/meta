@@ -1,0 +1,65 @@
+{
+  "steps": [
+    {
+      "critical": false,
+      "detail": "Drag the red square from the upper left into the left side of the brown rectangular box.",
+      "end_s": 3.2,
+      "id": 1,
+      "objects": [
+        "red square",
+        "rectangular box"
+      ],
+      "start_s": 1.0,
+      "title": "Place red square in box",
+      "frame": "frames/step1.jpg",
+      "outlined": true
+    },
+    {
+      "critical": false,
+      "detail": "Drag the blue square from the left into the middle of the box next to the red square.",
+      "end_s": 6.2,
+      "id": 2,
+      "objects": [
+        "blue square",
+        "rectangular box",
+        "red square"
+      ],
+      "start_s": 3.9,
+      "title": "Place blue square in box",
+      "frame": "frames/step2.jpg",
+      "outlined": true
+    },
+    {
+      "critical": false,
+      "detail": "Drag the green square from the lower left into the right side of the box next to the blue square.",
+      "end_s": 9.1,
+      "id": 3,
+      "objects": [
+        "green square",
+        "rectangular box",
+        "blue square"
+      ],
+      "start_s": 6.8,
+      "title": "Place green square in box",
+      "frame": "frames/step3.jpg",
+      "outlined": true
+    },
+    {
+      "critical": false,
+      "detail": "Slide the gray bar in from the right to cover the top edge of the box.",
+      "end_s": 12.2,
+      "id": 4,
+      "objects": [
+        "gray lid",
+        "rectangular box"
+      ],
+      "start_s": 10.0,
+      "title": "Cover box with lid",
+      "frame": "frames/step4.jpg",
+      "outlined": false
+    }
+  ],
+  "task": "Arrange red, blue, and green squares inside box and close lid",
+  "cost_usd": 0.0354,
+  "duration_s": 13.0
+}
