@@ -136,9 +136,14 @@ def has_audio(path):
     return bool(r.stdout.strip())
 
 
+# Uploads are untrusted: only let ffmpeg open them as a real video container from a
+# local file, so playlist-style formats (HLS, concat, ...) can never pull in other files.
+SAFE_INPUT = ["-protocol_whitelist", "file", "-format_whitelist", "mov,mp4,matroska,webm,avi"]
+
+
 def normalize(src, dst):
     """Any phone video (.mov, HEVC, rotated) -> 720p H.264 MP4 that browsers play."""
-    _ffmpeg("-i", str(src), "-vf", "scale=-2:720,fps=30", "-c:v", "libx264", "-preset", "veryfast",
+    _ffmpeg(*SAFE_INPUT, "-i", str(src), "-vf", "scale=-2:720,fps=30", "-c:v", "libx264", "-preset", "veryfast",
             "-crf", "26", "-pix_fmt", "yuv420p", "-c:a", "aac", "-movflags", "+faststart", str(dst))
 
 
@@ -176,7 +181,8 @@ def vote(runs, step_ids):
     merged = []
     for sid in step_ids:
         verdicts = [s for run in runs for s in run["steps"] if s["id"] == sid]
-        counts = Counter(v["status"] for v in verdicts)
+        # Model output is untrusted: anything outside the schema counts as no verdict.
+        counts = Counter(v["status"] for v in verdicts if v["status"] in STATUSES)
         status, n = counts.most_common(1)[0] if counts else ("uncertain", 0)
         if n < need:
             tally = ", ".join(f"{k} ×{c}" for k, c in counts.most_common())

@@ -10,6 +10,8 @@ const two = (n) => String(n).padStart(2, "0");
 // Bundled samples are named like "skipped-jelly"; show that as "Skipped jelly".
 const pretty = (slug) => slug.charAt(0).toUpperCase() + slug.slice(1).replace(/[-_]+/g, " ");
 
+// Only ever put known-safe IDs into request paths.
+const safeId = (v) => (/^[A-Za-z0-9_-]{1,64}$/.test(v ?? "") ? v : null);
 const LABEL = { done: "Correct", skipped: "Skipped", out_of_order: "Wrong order", incorrect: "Done wrong", uncertain: "Unclear" };
 let procedure = null;
 let report = null;
@@ -80,6 +82,7 @@ function sampleButton(text, onclick) {
 
 async function loadProcedure(pid) {
   stopReplay();
+  if (!safeId(pid)) throw new Error("That link doesn't point to a procedure.");
   procedure = await api(`/api/procedures/${pid}`);
   report = null;
   $("task-title").textContent = procedure.task;
@@ -146,6 +149,7 @@ function issueCard(s) {
 
 async function loadReport(aid, scroll = true) {
   stopReplay();
+  if (!safeId(aid)) throw new Error("That link doesn't point to a checked attempt.");
   report = await api(`/api/procedures/${procedure.id}/attempts/${aid}`);
   const steps = report.steps;
   const ok = steps.filter((s) => s.status === "done").length;

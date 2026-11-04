@@ -6,4 +6,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY watchonce ./watchonce
 COPY demo ./demo
 ENV DATA_DIR=/tmp/watchonce
+RUN useradd --create-home --uid 10001 app
+USER app
 CMD ["sh", "-c", "uvicorn watchonce.app:app --host 0.0.0.0 --port ${PORT:-8000}"]
