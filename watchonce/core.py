@@ -20,8 +20,17 @@ from PIL import Image, ImageDraw
 MODEL = "muse-spark-1.3"
 SAM_MODEL = "sam-3.1"
 # Muse Spark samples roughly one frame per second of video time; slowing clips
-# down 3x lets it see about six moments per real second (measured).
+# down 3x lets it see about six moments per real second (measured). Long videos
+# get less slow-down so each pass stays near ~4 minutes of video time.
 SLOW = 3
+
+
+def slow_for(seconds):
+    if seconds <= 4 * 60:
+        return 3
+    if seconds <= 8 * 60:
+        return 2
+    return 1
 VOTES = 3
 # Standard-mode prices, USD per 1M tokens (dev.meta.ai/docs/pricing-rate-limits).
 PRICE_IN, PRICE_OUT = 1.25, 4.25
@@ -81,14 +90,31 @@ AUDIT_SCHEMA = {
 }
 
 EXTRACT_PROMPT = """You are watching an expert perform a hands-on procedure while narrating it.
-Break the procedure into its distinct, ordered steps. A step is one physical action with a
-visible outcome (e.g. "unplug the power cable", "press the module until both latches click").
+Break the procedure into its distinct, ordered steps. A step is a unit of work whose outcome
+matters to the result and stays visible: a part placed, a cable unplugged, a lid closed, a
+module pressed until it clicks. Incidental handling is never a step: picking up or putting
+down a tool, moving hands, or the sub-motions of one action (placing a lid and screwing it
+tight is one step, "Close the jar").
 For each step give the time range in seconds where it happens, the physical objects involved
 (short noun phrases a segmentation model could find, most important first, e.g. "RAM stick",
 "slot latch"), and whether it is critical. Critical means skipping or botching it causes
 damage, injury or a failed result; most steps in a procedure are not critical.
 Use the narration to understand intent, but only include steps you can see being performed.
 Write titles as short imperatives ("Close both jars")."""
+
+REVIEW_PROMPT = """Below is a first draft of the steps in this procedure video. Watch the whole
+video again and return the complete, corrected list:
+- add any step the draft missed, including small ones such as sliding, turning, flipping,
+  pressing or attaching something, as long as it changes the result
+- merge draft steps that are really parts of one action (placing a lid and screwing it
+  tight is one step)
+- remove anything that is not a step: picking up or putting down a tool, picking
+  something up and putting it straight back, moving hands, idle movement
+- fix the time ranges, and renumber the steps 1, 2, 3... in the order they happen
+Keep the same field rules as the draft.
+
+Draft:
+{draft}"""
 
 AUDIT_PROMPT = """You are checking a trainee's attempt at a procedure against the expert's
 reference steps below. Watch the trainee video and, for every reference step, decide:
@@ -266,9 +292,14 @@ class Engine:
         return json.loads(r.output_text), cost
 
     async def _on_slowed(self, video, workdir):
+        """Upload a slowed copy for analysis; returns (file id, slow-down used)."""
+        slow = slow_for(duration(video))
         slow_path = Path(workdir) / "analysis.mp4"
-        await asyncio.to_thread(slowed, video, slow_path)
-        return await self._upload(slow_path)
+        await asyncio.to_thread(slowed, video, slow_path, slow)
+        try:
+            return await self._upload(slow_path), slow
+        finally:
+            slow_path.unlink(missing_ok=True)
 
     async def highlight(self, image_path, phrase, dst):
         """Outline `phrase` in the image with SAM 3.1. Returns False if nothing matched."""
@@ -309,13 +340,20 @@ class Engine:
         frames = workdir / "frames"
         frames.mkdir(parents=True, exist_ok=True)
         progress("Preparing video")
-        file_id = await self._on_slowed(video, workdir)
+        file_id, slow = await self._on_slowed(video, workdir)
         try:
             progress("Muse Spark is watching the expert")
-            procedure, cost = await self._ask(file_id, EXTRACT_PROMPT, PROCEDURE_SCHEMA, "procedure")
+            draft, cost = await self._ask(file_id, EXTRACT_PROMPT, PROCEDURE_SCHEMA, "procedure")
+            # One pass misses small actions on long procedures (measured: 8 of 12 steps
+            # on a 12-step assembly), so a second pass reviews the draft against the video.
+            progress("Muse Spark is double-checking the steps")
+            procedure, review_cost = await self._ask(
+                file_id, REVIEW_PROMPT.format(draft=json.dumps(draft, indent=2)), PROCEDURE_SCHEMA, "procedure")
+            cost += review_cost
+            procedure["draft_steps"] = len(draft["steps"])
         finally:
             await self.client.files.delete(file_id)
-        _unslow(procedure["steps"], SLOW)
+        _unslow(procedure["steps"], slow)
 
         progress("SAM 3.1 is outlining each step")
         shots = await asyncio.gather(*[
@@ -335,7 +373,7 @@ class Engine:
         frames = workdir / "frames"
         frames.mkdir(parents=True, exist_ok=True)
         progress("Preparing video")
-        file_id = await self._on_slowed(video, workdir)
+        file_id, slow = await self._on_slowed(video, workdir)
         reference = [{k: v for k, v in s.items() if k in ("id", "title", "detail", "objects", "critical")}
                      for s in procedure["steps"]]
         prompt = AUDIT_PROMPT.format(procedure=json.dumps(reference, indent=2))
@@ -348,7 +386,7 @@ class Engine:
             await self.client.files.delete(file_id)
         runs = [a for a, _ in answers]
         for run in runs:
-            _unslow(run["steps"], SLOW)
+            _unslow(run["steps"], slow)
 
         length = duration(video)
         await asyncio.to_thread(frame_at, video, min(1.0, length / 2), workdir / "poster.jpg")

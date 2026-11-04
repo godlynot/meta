@@ -21,11 +21,11 @@ from .live import LiveCoach, look
 HERE = Path(__file__).parent
 DATA = Path(os.environ.get("DATA_DIR", HERE.parent / "data")) / "procedures"
 DEMO = HERE.parent / "demo" / "procedures"
-MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", "300"))
-MAX_VIDEO_S = int(os.environ.get("MAX_VIDEO_S", "180"))
+MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", "600"))
+MAX_VIDEO_S = int(os.environ.get("MAX_VIDEO_S", str(15 * 60)))
 JOBS_PER_HOUR_PER_IP = int(os.environ.get("JOBS_PER_HOUR_PER_IP", "8"))
 JOBS_PER_DAY = int(os.environ.get("JOBS_PER_DAY", "80"))
-MAX_LIVE_CLIPS = int(os.environ.get("MAX_LIVE_CLIPS", "90"))  # about 6 minutes at one clip every 4 s
+MAX_LIVE_CLIPS = int(os.environ.get("MAX_LIVE_CLIPS", "225"))  # about 15 minutes at one clip every 4 s
 LIVE_IDLE_S = 15 * 60
 ID = re.compile(r"[A-Za-z0-9_-]{1,64}")
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -294,7 +294,7 @@ def live_session(pid, sid):
 async def live_clip(pid: str, sid: str, file: UploadFile):
     session = live_session(pid, sid)
     if session["clips"] >= MAX_LIVE_CLIPS:
-        raise HTTPException(429, "Live sessions stop after about 6 minutes. Press Stop to see the results.")
+        raise HTTPException(429, "Live sessions stop after about 15 minutes. Press Stop to see the results.")
     session["clips"] += 1
     n = session["clips"]  # this request's own clip number; later clips may arrive while we wait
     clip = session["dir"] / f"clip{n}.bin"

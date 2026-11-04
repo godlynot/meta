@@ -16,4 +16,7 @@ node tests/live_real.js http://localhost:8077 attempt.y4m nutella-sandwich 47
 # abuse limits, against a server started with tight limits
 MAX_UPLOAD_MB=1 MAX_VIDEO_S=6 JOBS_PER_HOUR_PER_IP=3 uvicorn watchonce.app:app --port 8078 &
 python tests/api_test.py http://localhost:8078 tests/media --limits
+
+# harder procedure: 12 steps, look-alike parts, distractor moves, planted mistakes
+python tests/make_complex.py tests/media/complex     # writes expert.mp4, attempt.mp4, truth.json
 ```

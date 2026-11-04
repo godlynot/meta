@@ -181,6 +181,10 @@ async function loadReport(aid, scroll = true) {
   if (scroll) $("report").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+// Alerts stay on screen long enough to read, even when there is no voice to wait for.
+const MIN_ALERT_MS = 2500;
+const linger = (ms) => new Promise((r) => setTimeout(r, ms));
+
 function say(text) {
   return new Promise((resolve) => {
     if (!("speechSynthesis" in window)) return setTimeout(resolve, 2500);
@@ -221,7 +225,7 @@ function replay() {
     video.pause();
     coach.innerHTML = `<span class="tag">${esc(tag)}</span><strong>${esc(headline)}</strong><span>${esc(detail)}</span>`;
     coach.hidden = false;
-    await say(`${headline} ${detail}`);
+    await Promise.all([say(`${headline} ${detail}`), linger(MIN_ALERT_MS)]);
     coach.hidden = true;
     busy = false;
     if (!force && !video.ended) video.play();
@@ -295,8 +299,8 @@ async function speakQueue() {
     const tag = a.kind === "incorrect" ? "Stop" : "Hold on";
     coach.innerHTML = `<span class="tag">${esc(tag)}</span><strong>${esc(a.message)}</strong><span>${esc(a.title)}</span>`;
     coach.hidden = false;
-    await say(`${tag}. ${a.message}`);
-    await new Promise((r) => setTimeout(r, 600));
+    await Promise.all([say(`${tag}. ${a.message}`), linger(MIN_ALERT_MS)]);
+    await linger(600);
   }
   coach.hidden = true;
   live.speaking = false;
@@ -320,7 +324,7 @@ async function sendClip(blob, type) {
       || `Watching. ${r.state.done} of ${r.state.total} steps seen so far.`;
   } catch (err) {
     $("live-status").textContent = err.message;
-    if (/ended|6 minutes/.test(err.message)) stopLive();
+    if (/ended|15 minutes/.test(err.message)) stopLive();
   } finally {
     live.pending--;
   }
