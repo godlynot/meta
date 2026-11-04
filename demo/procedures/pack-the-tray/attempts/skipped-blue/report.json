@@ -3,96 +3,96 @@
     {
       "id": 1,
       "status": "done",
-      "start_s": 1.0,
-      "end_s": 3.2,
-      "evidence": "Red square moves from upper left and settles inside left side of brown box",
+      "start_s": 0.7,
+      "end_s": 1.5,
+      "evidence": "Red square moves from the left column into the brown box and comes to rest in the left position inside the box.",
       "fix": "",
       "agreement": "3/3",
       "alert_s": null,
       "title": "Place red square in box",
-      "critical": false
+      "critical": true
     },
     {
       "id": 2,
       "status": "skipped",
       "start_s": null,
       "end_s": null,
-      "evidence": "Blue square stays stationary on left side for entire video and never enters box",
-      "fix": "Drag the blue square into the middle of the box next to the red square.",
+      "evidence": "Blue square remains stationary in the left column for the entire video and never moves toward the brown box.",
+      "fix": "Place the blue square into the middle position inside the brown box next to the red square.",
       "agreement": "3/3",
-      "alert_s": 4.0,
+      "alert_s": 2.0,
       "title": "Place blue square in box",
-      "critical": false,
+      "critical": true,
       "frame": "frames/issue2.jpg",
       "outlined": true
     },
     {
       "id": 3,
       "status": "out_of_order",
-      "start_s": 7.0,
-      "end_s": 9.2,
-      "evidence": "Green square moves from lower left into right side of box, but occurs after gray lid already covers box and without blue square in place",
-      "fix": "Place the green square in the right side of the box before sliding the lid on and after placing the blue square.",
-      "agreement": "2/3",
-      "alert_s": 7.0,
+      "start_s": 3.4,
+      "end_s": 4.3,
+      "evidence": "Green square moves from the left column into the brown box to the right position, but this occurs after the lid was already closed and without the blue square ever placed in the middle.",
+      "fix": "Place the green square into the right position only after the blue square is in the middle and before closing the lid.",
+      "agreement": "3/3",
+      "alert_s": 3.4,
       "title": "Place green square in box",
-      "critical": false,
+      "critical": true,
       "frame": "frames/issue3.jpg",
       "outlined": true
     },
     {
       "id": 4,
       "status": "out_of_order",
-      "start_s": 4.0,
-      "end_s": 6.2,
-      "evidence": "Gray bar slides in from right to cover top edge of box while blue and green squares are still outside box",
-      "fix": "Slide the gray lid on only after red, blue, and green squares are all inside the box.",
+      "start_s": 2.0,
+      "end_s": 2.8,
+      "evidence": "Gray bar slides in from the right to cover the top edge of the brown box, but this occurs when only the red square is inside and before the blue and green squares are placed.",
+      "fix": "Slide the gray lid closed only after the red, blue, and green squares are all inside the box.",
       "agreement": "3/3",
-      "alert_s": 4.0,
-      "title": "Cover box with lid",
-      "critical": false,
+      "alert_s": 2.0,
+      "title": "Close box with lid",
+      "critical": true,
       "frame": "frames/issue4.jpg",
       "outlined": false
     }
   ],
   "extra_actions": [],
   "votes": 3,
-  "duration_s": 10.0,
-  "cost_usd": 0.0986,
+  "duration_s": 5.8,
+  "cost_usd": 0.0766,
   "runs": [
     {
       "extra_actions": [],
       "steps": [
         {
-          "end_s": 3.2,
-          "evidence": "Red square moves from upper left and settles inside left side of brown box",
+          "end_s": 1.5,
+          "evidence": "Red square moves from the left column into the brown box and comes to rest in the left position inside the box.",
           "fix": "",
           "id": 1,
-          "start_s": 1.0,
+          "start_s": 0.7,
           "status": "done"
         },
         {
           "end_s": null,
-          "evidence": "Blue square stays stationary on left side for entire video and never enters box",
-          "fix": "Drag the blue square into the middle of the box next to the red square.",
+          "evidence": "Blue square remains stationary in the left column for the entire video and never moves toward the brown box.",
+          "fix": "Place the blue square into the middle position inside the brown box next to the red square.",
           "id": 2,
           "start_s": null,
           "status": "skipped"
         },
         {
-          "end_s": 9.2,
-          "evidence": "Green square moves from lower left into right side of box, but occurs after gray lid already covers box and without blue square in place",
-          "fix": "Place the green square in the right side of the box before sliding the lid on and after placing the blue square.",
+          "end_s": 4.2,
+          "evidence": "Green square moves from the left column into the brown box to the right position, but this occurs after the lid was already closed and without the blue square ever placed in the middle.",
+          "fix": "Place the green square into the right position only after the blue square is in the middle and before closing the lid.",
           "id": 3,
-          "start_s": 7.0,
+          "start_s": 3.3,
           "status": "out_of_order"
         },
         {
-          "end_s": 6.2,
-          "evidence": "Gray bar slides in from right to cover top edge of box while blue and green squares are still outside box",
-          "fix": "Slide the gray lid on only after red, blue, and green squares are all inside the box.",
+          "end_s": 2.8,
+          "evidence": "Gray bar slides in from the right to cover the top edge of the brown box, but this occurs when only the red square is inside and before the blue and green squares are placed.",
+          "fix": "Slide the gray lid closed only after the red, blue, and green squares are all inside the box.",
           "id": 4,
-          "start_s": 4.0,
+          "start_s": 2.0,
           "status": "out_of_order"
         }
       ]
@@ -101,35 +101,35 @@
       "extra_actions": [],
       "steps": [
         {
-          "end_s": 3.2,
-          "evidence": "Red square moves from upper-left starting position rightward into the brown box and settles inside on the left side.",
+          "end_s": 1.5,
+          "evidence": "Red square moves from top of left column into left-side position inside the brown rectangular box and stays there.",
           "fix": "",
           "id": 1,
-          "start_s": 1.0,
+          "start_s": 0.7,
           "status": "done"
         },
         {
           "end_s": null,
-          "evidence": "Blue square remains stationary on the left side of the screen for the entire video and never enters the box.",
-          "fix": "Drag the blue square from the left into the middle of the box next to the red square.",
+          "evidence": "Blue square remains stationary in the left column for the entire video and never enters the brown box.",
+          "fix": "Move the blue square into the middle position inside the brown box next to the red square before placing green and closing the lid.",
           "id": 2,
           "start_s": null,
           "status": "skipped"
         },
         {
-          "end_s": 9.2,
-          "evidence": "Green square moves from lower-left rightward into the box interior and settles on the right side of the box.",
-          "fix": "",
+          "end_s": 4.3,
+          "evidence": "Green square moves from left column into right-side position inside the brown box at ~10.5-13s, after the lid is already closed and while the middle position is still empty with blue outside.",
+          "fix": "Place the green square in the right position only after the blue square is in the middle and before closing the lid.",
           "id": 3,
-          "start_s": 7.0,
-          "status": "done"
+          "start_s": 3.5,
+          "status": "out_of_order"
         },
         {
-          "end_s": 6.2,
-          "evidence": "Gray bar slides in from the right to cover the top edge of the box, occurring after red placement but before green placement while blue is still outside.",
-          "fix": "Slide the lid to cover the box only after the red, blue, and green squares are all inside.",
+          "end_s": 2.8,
+          "evidence": "Gray bar slides in from the right to cover the top edge of the brown box at ~6-8.5s while only the red square is inside and blue and green are still outside.",
+          "fix": "Slide the gray lid to close the box only after red, blue, and green squares are all inside.",
           "id": 4,
-          "start_s": 4.0,
+          "start_s": 2.0,
           "status": "out_of_order"
         }
       ]
@@ -138,35 +138,35 @@
       "extra_actions": [],
       "steps": [
         {
-          "end_s": 3.1,
-          "evidence": "Red square moves from upper-left starting position across the screen and comes to rest inside the left side of the brown rectangular box.",
+          "end_s": 1.4,
+          "evidence": "Red square visibly moves from left column into left side inside brown box and stays there.",
           "fix": "",
           "id": 1,
-          "start_s": 1.0,
+          "start_s": 0.7,
           "status": "done"
         },
         {
           "end_s": null,
-          "evidence": "Blue square remains stationary on the left side for the entire video and never enters the brown box.",
-          "fix": "Drag the blue square from the left into the middle of the box next to the red square before placing green and the lid.",
+          "evidence": "Blue square remains stationary on left side outside box for entire video; never moves into box.",
+          "fix": "Place the blue square into the middle position inside the box next to the red square.",
           "id": 2,
           "start_s": null,
           "status": "skipped"
         },
         {
-          "end_s": 9.2,
-          "evidence": "Green square moves from lower-left into the right side of the box while the blue square is still outside on the left and the gray lid is already covering the top.",
-          "fix": "Place the green square into the right side next to the blue square only after the blue square is in the middle and before the lid is applied.",
+          "end_s": 4.3,
+          "evidence": "Green square moves from left into right side inside box while middle position is empty and lid is already closed, so placed before blue prerequisite.",
+          "fix": "Place green only after blue is in the middle so it sits next to blue, and before closing the lid.",
           "id": 3,
-          "start_s": 7.0,
+          "start_s": 3.4,
           "status": "out_of_order"
         },
         {
-          "end_s": 6.2,
-          "evidence": "Gray bar slides in from the right edge and comes to rest covering the top edge of the box while blue and green squares are still outside the box.",
-          "fix": "Slide the gray lid to cover the box only after the red, blue, and green squares are all inside the box.",
+          "end_s": 2.8,
+          "evidence": "Gray bar slides in from right to cover top edge of box when only red is inside and blue and green are still outside.",
+          "fix": "Close the box with the lid only after red, blue, and green squares are all placed inside.",
           "id": 4,
-          "start_s": 4.0,
+          "start_s": 2.2,
           "status": "out_of_order"
         }
       ]

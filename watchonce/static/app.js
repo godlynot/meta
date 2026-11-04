@@ -185,11 +185,48 @@ async function loadReport(aid, scroll = true) {
 const MIN_ALERT_MS = 2500;
 const linger = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// The coach speaks with the most natural voice this device has. Browsers expose
+// neural voices under names like "Natural" (Edge), "Premium"/"Enhanced" (Apple)
+// and "Google" (Chrome); Apple's novelty voices are skipped.
+const NOVELTY = /albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|fred|junior|ralph|kathy/i;
+let coachVoice = null;
+
+function pickVoice() {
+  const voices = window.speechSynthesis?.getVoices() || [];
+  const lang = (navigator.language || "en-US").toLowerCase();
+  const score = (v) => {
+    if (NOVELTY.test(v.name) || !/^en/i.test(v.lang)) return -1;
+    let n = 0;
+    if (/natural|neural/i.test(v.name)) n += 100;
+    if (/premium|enhanced/i.test(v.name)) n += 80;
+    if (/google/i.test(v.name)) n += 60;
+    if (/samantha|ava|allison|susan|zoe|evan|nathan|aria|jenny|guy/i.test(v.name)) n += 40;
+    if (v.lang.toLowerCase() === lang) n += 20;
+    return n;
+  };
+  coachVoice = voices.filter((v) => score(v) >= 0).sort((a, b) => score(b) - score(a))[0] || null;
+}
+if ("speechSynthesis" in window) {
+  pickVoice();
+  speechSynthesis.addEventListener?.("voiceschanged", pickVoice);
+}
+
+// Spoken lines are phrased the way a person would say them, without step numbers.
+const lower = (t) => (t ? t.charAt(0).toLowerCase() + t.slice(1) : "");
+function spoken(kind, title, note) {
+  if (kind === "skipped") return `Hold on, you skipped a step: ${lower(title)}.`;
+  if (kind === "not_yet") return `Hold on, you haven't done this yet: ${lower(title)}.`;
+  if (kind === "never") return `You never got to this step: ${lower(title)}.`;
+  if (kind === "out_of_order") return `Wait, that's out of order: ${lower(title)}.`;
+  return `Stop. ${note || title}`;
+}
+
 function say(text) {
   return new Promise((resolve) => {
     if (!("speechSynthesis" in window)) return setTimeout(resolve, 2500);
     const u = new SpeechSynthesisUtterance(text);
-    u.rate = 1.05;
+    if (coachVoice) u.voice = coachVoice;
+    u.rate = 1;
     u.onend = resolve;
     u.onerror = resolve;
     speechSynthesis.cancel();
@@ -225,7 +262,7 @@ function replay() {
     video.pause();
     coach.innerHTML = `<span class="tag">${esc(tag)}</span><strong>${esc(headline)}</strong><span>${esc(detail)}</span>`;
     coach.hidden = false;
-    await Promise.all([say(`${headline} ${detail}`), linger(MIN_ALERT_MS)]);
+    await Promise.all([say(spoken(s.status, s.title, s.fix)), linger(MIN_ALERT_MS)]);
     coach.hidden = true;
     busy = false;
     if (!force && !video.ended) video.play();
@@ -299,7 +336,8 @@ async function speakQueue() {
     const tag = a.kind === "incorrect" ? "Stop" : "Hold on";
     coach.innerHTML = `<span class="tag">${esc(tag)}</span><strong>${esc(a.message)}</strong><span>${esc(a.title)}</span>`;
     coach.hidden = false;
-    await Promise.all([say(`${tag}. ${a.message}`), linger(MIN_ALERT_MS)]);
+    const kind = a.kind === "incorrect" ? "incorrect" : /never/.test(a.message) ? "never" : "not_yet";
+    await Promise.all([say(spoken(kind, a.title, a.message)), linger(MIN_ALERT_MS)]);
     await linger(600);
   }
   coach.hidden = true;

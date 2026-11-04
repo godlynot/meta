@@ -33,7 +33,7 @@ const check = (n, ok, d = "") => { results.push(!!ok); console.log(`${ok ? "PASS
   console.log("final step states:", stamps);
   console.log("spoken:", spoken);
   check("skipped blue square flagged", stamps[1] === "skipped", stamps);
-  check("alerts mention step 2", spoken.some((t) => /step 2/i.test(t)), spoken);
+  check("alerts mention the skipped blue square", spoken.some((t) => /blue square/i.test(t)), spoken);
   check("camera released after stop", await page.evaluate(() => !live.stream || live.stream.getTracks().every((t) => t.readyState === "ended")));
   const reviewed = await page.waitForSelector("#report:not([hidden])", { timeout: 240000 }).then(() => true).catch(() => false);
   check("full review of the whole session appears after stop", reviewed);

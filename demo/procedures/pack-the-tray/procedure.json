@@ -1,65 +1,64 @@
 {
   "steps": [
     {
-      "critical": false,
-      "detail": "Drag the red square from the upper left into the left side of the brown rectangular box.",
-      "end_s": 3.2,
+      "critical": true,
+      "detail": "Move the red square from the left column into the left position inside the brown rectangular box.",
+      "end_s": 1.5,
       "id": 1,
       "objects": [
         "red square",
-        "rectangular box"
+        "brown box"
       ],
-      "start_s": 1.0,
+      "start_s": 0.7,
       "title": "Place red square in box",
       "frame": "frames/step1.jpg",
       "outlined": true
     },
     {
-      "critical": false,
-      "detail": "Drag the blue square from the left into the middle of the box next to the red square.",
-      "end_s": 6.2,
+      "critical": true,
+      "detail": "Move the blue square from the left column into the middle position inside the brown rectangular box next to the red square.",
+      "end_s": 2.8,
       "id": 2,
       "objects": [
         "blue square",
-        "rectangular box",
-        "red square"
+        "brown box"
       ],
-      "start_s": 3.9,
+      "start_s": 2.0,
       "title": "Place blue square in box",
       "frame": "frames/step2.jpg",
       "outlined": true
     },
     {
-      "critical": false,
-      "detail": "Drag the green square from the lower left into the right side of the box next to the blue square.",
-      "end_s": 9.1,
+      "critical": true,
+      "detail": "Move the green square from the left into the right position inside the brown rectangular box next to the blue square.",
+      "end_s": 4.3,
       "id": 3,
       "objects": [
         "green square",
-        "rectangular box",
-        "blue square"
+        "brown box"
       ],
-      "start_s": 6.8,
+      "start_s": 3.3,
       "title": "Place green square in box",
       "frame": "frames/step3.jpg",
       "outlined": true
     },
     {
-      "critical": false,
-      "detail": "Slide the gray bar in from the right to cover the top edge of the box.",
-      "end_s": 12.2,
+      "critical": true,
+      "detail": "Slide the gray bar in from the right to cover and close the top edge of the brown rectangular box.",
+      "end_s": 5.7,
       "id": 4,
       "objects": [
         "gray lid",
-        "rectangular box"
+        "brown box"
       ],
-      "start_s": 10.0,
-      "title": "Cover box with lid",
+      "start_s": 5.0,
+      "title": "Close box with lid",
       "frame": "frames/step4.jpg",
       "outlined": false
     }
   ],
-  "task": "Arrange red, blue, and green squares inside box and close lid",
-  "cost_usd": 0.0354,
-  "duration_s": 13.0
+  "task": "Place colored squares in box and close it",
+  "draft_steps": 4,
+  "cost_usd": 0.0389,
+  "duration_s": 7.2
 }
