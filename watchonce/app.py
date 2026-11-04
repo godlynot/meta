@@ -191,7 +191,7 @@ async def create_procedure(request: Request, file: UploadFile):
 
     async def work(progress):
         try:
-            progress("Converting video")
+            progress("Converting video (phone videos can take a few minutes)")
             await prepare(raw, folder / "expert.mp4")
             procedure = await eng.learn(folder / "expert.mp4", folder, progress)
             (folder / "procedure.json").write_text(json.dumps(procedure, indent=2))
@@ -221,7 +221,7 @@ async def create_attempt(pid: str, request: Request, file: UploadFile):
 
     async def work(progress):
         try:
-            progress("Converting video")
+            progress("Converting video (phone videos can take a few minutes)")
             await prepare(raw, attempt / "attempt.mp4")
             report = await eng.check(procedure, attempt / "attempt.mp4", attempt, progress)
             (attempt / "report.json").write_text(json.dumps(report, indent=2))

@@ -175,13 +175,13 @@ SAFE_INPUT = ["-protocol_whitelist", "file", "-format_whitelist", "mov,mp4,matro
 
 def normalize(src, dst):
     """Any phone video (.mov, HEVC, rotated) -> 720p H.264 MP4 that browsers play."""
-    _ffmpeg(*SAFE_INPUT, "-i", str(src), "-vf", "scale=-2:720,fps=30", "-c:v", "libx264", "-preset", "veryfast",
+    _ffmpeg(*SAFE_INPUT, "-i", str(src), "-vf", "scale=-2:720,fps=30", "-c:v", "libx264", "-preset", "ultrafast",
             "-crf", "26", "-pix_fmt", "yuv420p", "-c:a", "aac", "-movflags", "+faststart", str(dst))
 
 
 def slowed(src, dst, slow=SLOW):
     args = ["-i", str(src), "-vf", f"setpts={slow}*PTS", "-r", "10", "-c:v", "libx264",
-            "-preset", "veryfast", "-crf", "26", "-pix_fmt", "yuv420p"]
+            "-preset", "ultrafast", "-crf", "26", "-pix_fmt", "yuv420p"]
     if has_audio(src):
         tempo, chain = 1 / slow, []
         while tempo < 0.5:  # atempo only accepts factors >= 0.5, so chain them

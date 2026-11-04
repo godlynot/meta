@@ -1,0 +1,85 @@
+{
+  "steps": [
+    {
+      "critical": false,
+      "detail": "Unscrew the fasteners on the bottom with a screwdriver and lift off the bottom panel to expose the motherboard.",
+      "end_s": 29.0,
+      "id": 1,
+      "objects": [
+        "mini PC case",
+        "bottom cover",
+        "screw",
+        "screwdriver"
+      ],
+      "start_s": 13.0,
+      "title": "Open bottom cover",
+      "frame": "frames/step1.jpg",
+      "outlined": false
+    },
+    {
+      "critical": false,
+      "detail": "Release the memory slot clips and lift the existing SO-DIMM out of the slot.",
+      "end_s": 50.3,
+      "id": 2,
+      "objects": [
+        "RAM stick",
+        "memory slot",
+        "motherboard"
+      ],
+      "start_s": 33.7,
+      "title": "Remove old RAM stick",
+      "frame": "frames/step2.jpg",
+      "outlined": false
+    },
+    {
+      "critical": true,
+      "detail": "Align the first green SO-DIMM to the slot and press it in until seated.",
+      "end_s": 72.0,
+      "id": 3,
+      "objects": [
+        "RAM stick",
+        "memory slot",
+        "motherboard"
+      ],
+      "start_s": 60.7,
+      "title": "Install first RAM stick",
+      "frame": "frames/step3.jpg",
+      "outlined": false
+    },
+    {
+      "critical": true,
+      "detail": "Align the second green SO-DIMM to the remaining slot and press it in until seated.",
+      "end_s": 85.7,
+      "id": 4,
+      "objects": [
+        "RAM stick",
+        "memory slot",
+        "motherboard"
+      ],
+      "start_s": 77.0,
+      "title": "Install second RAM stick",
+      "frame": "frames/step4.jpg",
+      "outlined": false
+    },
+    {
+      "critical": false,
+      "detail": "Place the bottom cover back on the chassis and reinstall and tighten the case screws.",
+      "end_s": 117.0,
+      "id": 5,
+      "objects": [
+        "bottom cover",
+        "mini PC case",
+        "screw",
+        "screwdriver"
+      ],
+      "start_s": 87.7,
+      "title": "Close bottom cover",
+      "frame": "frames/step5.jpg",
+      "outlined": false
+    }
+  ],
+  "task": "Replace the RAM in a mini PC",
+  "draft_steps": 5,
+  "cost_usd": 0.2548,
+  "duration_s": 121.7
+}
