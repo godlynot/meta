@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: watch-once
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/samples
+    envVars:
+      - key: META_API_KEY
+        sync: false

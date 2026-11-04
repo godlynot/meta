@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Watch Once</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <h1>Watch Once</h1>
+  <p class="tagline">Film an expert doing a task once. Then check anyone's attempt: which steps they skipped, swapped or got wrong, with the expert's clip showing how it's done.</p>
+  <p class="powered">Muse Spark watches the videos · SAM 3.1 outlines the evidence</p>
+</header>
+
+<main>
+  <section id="teach" class="panel">
+    <h2><span class="num">1</span> Teach it once</h2>
+    <p class="hint">Upload a video of someone doing the task correctly, ideally saying each step out loud. Up to 3 minutes.</p>
+    <div class="actions">
+      <label class="button primary">Upload expert video
+        <input type="file" accept="video/*" id="expert-file" hidden>
+      </label>
+      <span id="sample-procedures"></span>
+    </div>
+    <div id="teach-progress" class="progress" hidden></div>
+    <div id="procedure" hidden>
+      <h3 id="task-title"></h3>
+      <video id="expert-video" controls playsinline preload="metadata"></video>
+      <ol id="steps" class="steps"></ol>
+    </div>
+  </section>
+
+  <section id="check" class="panel" hidden>
+    <h2><span class="num">2</span> Check an attempt</h2>
+    <p class="hint">Upload a video of someone else doing the same task. Every verdict is agreed by a majority of independent checks.</p>
+    <div class="actions">
+      <label class="button primary">Upload attempt
+        <input type="file" accept="video/*" id="attempt-file" hidden>
+      </label>
+      <span id="sample-attempts"></span>
+    </div>
+    <div id="check-progress" class="progress" hidden></div>
+    <div id="report" hidden>
+      <p id="summary" class="summary"></p>
+      <div class="replay">
+        <div class="player">
+          <video id="attempt-video" playsinline preload="metadata"></video>
+          <div id="coach" class="coach" hidden></div>
+        </div>
+        <button id="replay" class="button primary">▶ Replay with coach</button>
+        <p class="hint">Plays the attempt back and speaks up at the moment each mistake happens.</p>
+      </div>
+      <h3>What to fix</h3>
+      <div id="issues"></div>
+      <h3>Every step</h3>
+      <ol id="checklist" class="checklist"></ol>
+      <div id="extras"></div>
+      <p id="cost" class="fineprint"></p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  Built for the Meta Global AI Developer Hackathon 2026 ·
+  <a href="https://github.com/godlynot/meta">Source</a>
+</footer>
+<script src="/static/app.js"></script>
+</body>
+</html>
