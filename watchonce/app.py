@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from .core import Engine, VideoError, duration, normalize
-from .live import LiveCoach, observe_clip
+from .live import LiveCoach, look
 
 HERE = Path(__file__).parent
 DATA = Path(os.environ.get("DATA_DIR", HERE.parent / "data")) / "procedures"
@@ -25,7 +25,7 @@ MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", "300"))
 MAX_VIDEO_S = int(os.environ.get("MAX_VIDEO_S", "180"))
 JOBS_PER_HOUR_PER_IP = int(os.environ.get("JOBS_PER_HOUR_PER_IP", "8"))
 JOBS_PER_DAY = int(os.environ.get("JOBS_PER_DAY", "80"))
-MAX_LIVE_CLIPS = int(os.environ.get("MAX_LIVE_CLIPS", "45"))  # about 6 minutes of 8-second clips
+MAX_LIVE_CLIPS = int(os.environ.get("MAX_LIVE_CLIPS", "90"))  # about 6 minutes at one clip every 4 s
 LIVE_IDLE_S = 15 * 60
 ID = re.compile(r"[A-Za-z0-9_-]{1,64}")
 log = logging.getLogger("watchonce")
@@ -274,7 +274,8 @@ async def start_live(pid: str, request: Request):
     workdir = DATA.parent / "live" / sid
     workdir.mkdir(parents=True)
     live_sessions[sid] = {"pid": pid, "procedure": procedure, "coach": LiveCoach(procedure["steps"]),
-                          "clips": 0, "cost": 0.0, "lock": asyncio.Lock(), "seen": now, "dir": workdir}
+                          "clips": 0, "cost": 0.0, "cond": asyncio.Condition(), "results": {}, "applied": 0,
+                          "alerts": {}, "seen": now, "dir": workdir}
     return {"session": sid, "state": live_sessions[sid]["coach"].state()}
 
 
@@ -296,32 +297,63 @@ async def live_clip(pid: str, sid: str, file: UploadFile):
     session["clips"] += 1
     n = session["clips"]  # this request's own clip number; later clips may arrive while we wait
     clip = session["dir"] / f"clip{n}.bin"
-    limit, size = 40 * 1024 * 1024, 0
-    with open(clip, "wb") as out:
-        while chunk := await file.read(1024 * 1024):
-            size += len(chunk)
-            if size > limit:
-                raise HTTPException(413, "That clip was too large")
-            out.write(chunk)
-    async with session["lock"]:  # keep the running record in clip order
+    seen, cost, failure = None, 0.0, None
+    try:
+        limit, size = 40 * 1024 * 1024, 0
+        with open(clip, "wb") as out:
+            while chunk := await file.read(1024 * 1024):
+                size += len(chunk)
+                if size > limit:
+                    raise HTTPException(413, "That clip was too large")
+                out.write(chunk)
+        # Clips are looked at in parallel (each takes longer than the 4 s between
+        # clips), then applied to the running record strictly in clip order.
+        seen, cost = await look(get_engine(), session["procedure"], list(session["coach"].done),
+                                clip, session["dir"])
+    except HTTPException as e:
+        failure = e
+    except Exception:
+        log.exception("live clip failed in session %s", sid)
+    finally:
+        for f in session["dir"].glob(f"clip{n}[._]*"):
+            f.unlink(missing_ok=True)
+    alerts = await apply_in_order(session, n, seen)
+    session["cost"] += cost
+    if failure:
+        raise failure
+    return {"alerts": alerts, "state": session["coach"].state(),
+            "error": None if seen else "Missed that moment. Still watching."}
+
+
+def drain(session):
+    """Apply every observation whose turn has come, in clip order."""
+    while session["applied"] + 1 in session["results"]:
+        k = session["applied"] + 1
+        seen = session["results"].pop(k)
+        session["alerts"][k] = session["coach"].observe(seen["performed"], seen["working_on"]) if seen else []
+        session["applied"] = k
+    session["cond"].notify_all()
+
+
+async def apply_in_order(session, n, seen):
+    cond = session["cond"]
+    async with cond:
+        session["results"][n] = seen
+        drain(session)
         try:
-            alerts, seen, cost = await observe_clip(get_engine(), session["procedure"], session["coach"],
-                                                    clip, session["dir"])
-            session["cost"] += cost
-            error = None
-        except Exception:
-            log.exception("live clip failed in session %s", sid)
-            alerts, error = [], "Missed that moment. Still watching."
-        finally:
-            for f in session["dir"].glob(f"clip{n}[._]*"):
-                f.unlink(missing_ok=True)
-    return {"alerts": alerts, "state": session["coach"].state(), "error": error}
+            await asyncio.wait_for(cond.wait_for(lambda: session["applied"] >= n), 60)
+        except TimeoutError:
+            # An earlier clip never came back; stop waiting for it.
+            for k in range(session["applied"] + 1, n + 1):
+                session["results"].setdefault(k, None)
+            drain(session)
+        return session["alerts"].pop(n, [])
 
 
 @app.post("/api/procedures/{pid}/live/{sid}/end")
 async def end_live(pid: str, sid: str):
     session = live_session(pid, sid)
-    async with session["lock"]:
+    async with session["cond"]:
         alerts = session["coach"].finish()
         state = session["coach"].state()
     live_sessions.pop(sid, None)

@@ -12,6 +12,9 @@ const check = (n, ok, d = "") => { results.push(!!ok); console.log(`${ok ? "PASS
   await page.goto(BASE + "/?p=pack-the-tray", { waitUntil: "networkidle" });
   await page.evaluate(() => { window.__spoken = []; window.speechSynthesis.speak = (u) => { if (u.text) window.__spoken.push(u.text); setTimeout(() => u.onend && u.onend(), 200); }; });
   console.log("recorder mime:", await page.evaluate(() => pickMime()));
+  await page.evaluate(() => { window.__trips = []; const f = window.fetch;
+    window.fetch = async (u, o) => { const t = performance.now(); const r = await f(u, o);
+      if (/\/clips$/.test(String(u))) window.__trips.push(Math.round(performance.now() - t)); return r; }; });
   await page.click("#live-btn");
   check("live panel opens with camera preview", await page.waitForSelector("#live:not([hidden])", { timeout: 10000 }).then(() => true).catch(() => false));
   check("camera stream attached", await page.evaluate(() => !!document.getElementById("live-video").srcObject));
@@ -33,6 +36,10 @@ const check = (n, ok, d = "") => { results.push(!!ok); console.log(`${ok ? "PASS
   check("alerts mention step 2", spoken.some((t) => /step 2/i.test(t)), spoken);
   check("camera released after stop", await page.evaluate(() => !live.stream || live.stream.getTracks().every((t) => t.readyState === "ended")));
   check("start button usable again", await page.isEnabled("#live-btn"));
+  const trips = await page.evaluate(() => window.__trips);
+  console.log("clip round trips (ms):", trips);
+  check("a new clip is sent about every 4 seconds", trips.length >= 4, trips);
+  check("median clip round trip under 10 s", trips.length && trips.slice().sort((a, b) => a - b)[Math.floor(trips.length / 2)] < 10000, trips);
   check("no console errors", errors.length === 0, errors);
   console.log(`\n${results.filter(Boolean).length}/${results.length} passed`);
   await browser.close();

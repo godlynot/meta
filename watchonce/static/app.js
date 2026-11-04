@@ -266,8 +266,9 @@ $("attempt-file").onchange = (e) => procedure && pickFile(e.target, `/api/proced
 $("replay").onclick = replay;
 
 // Live coaching: record the camera in short clips, send each one, speak the alerts.
+// Two recorders run 4 s apart, so a new 8-second clip goes out every 4 seconds.
 const CLIP_MS = 8000;
-const live = { running: false, session: null, stream: null, recorder: null, pending: 0, queue: [], speaking: false };
+const live = { running: false, session: null, stream: null, recorders: [], pending: 0, queue: [], speaking: false };
 const LIVE_LABEL = { ...LABEL, pending: "Not yet" };
 
 function pickMime() {
@@ -325,15 +326,15 @@ async function sendClip(blob, type) {
   }
 }
 
-function recordClip(type) {
+function recordClip(type, lane) {
   if (!live.running) return;
   const parts = [];
   const rec = new MediaRecorder(live.stream, type ? { mimeType: type, videoBitsPerSecond: 1500000 } : undefined);
-  live.recorder = rec;
+  live.recorders[lane] = rec;
   rec.ondataavailable = (e) => e.data.size && parts.push(e.data);
   rec.onstop = () => {
     if (parts.length) sendClip(new Blob(parts, { type: rec.mimeType || type }), rec.mimeType || type);
-    recordClip(type);  // start the next clip straight away so nothing is missed
+    recordClip(type, lane);  // start the next clip straight away so nothing is missed
   };
   rec.start();
   setTimeout(() => rec.state === "recording" && rec.stop(), CLIP_MS);
@@ -377,7 +378,9 @@ async function startLive() {
   $("live-status").textContent = "Watching. Start the task whenever you're ready.";
   renderLive(started.state);
   $("live").scrollIntoView({ behavior: "smooth", block: "start" });
-  recordClip(pickMime());
+  const type = pickMime();
+  recordClip(type, 0);
+  setTimeout(() => recordClip(type, 1), CLIP_MS / 2);
 }
 
 async function stopLive() {
@@ -385,7 +388,8 @@ async function stopLive() {
   live.running = false;
   $("live-stop").disabled = true;
   $("live-status").textContent = "Checking the last few seconds…";
-  if (live.recorder?.state === "recording") live.recorder.stop();
+  for (const rec of live.recorders) if (rec?.state === "recording") rec.stop();
+  live.recorders = [];
   await new Promise((r) => setTimeout(r, 300));
   while (live.pending) await new Promise((r) => setTimeout(r, 200));
   live.stream?.getTracks().forEach((t) => t.stop());

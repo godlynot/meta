@@ -13,9 +13,11 @@ from pathlib import Path
 
 from .core import MODEL, PRICE_IN, PRICE_OUT, SAFE_INPUT, _ffmpeg
 
-# Live clips are short, so a 2x slow-down is enough to catch quick actions
-# while keeping each round trip fast.
-LIVE_SLOW = 2
+# Live clips are sent at normal speed: slowing them down doubles what the model
+# has to watch and the delay before an alert. Clips overlap instead (a new
+# 8-second clip every 4 seconds), so most moments are seen twice.
+
+WRONG_VOTES = 2
 
 OBSERVE_SCHEMA = {
     "type": "object",
@@ -64,6 +66,7 @@ class LiveCoach:
         self.done = []          # step ids in the order they were completed
         self.flagged = set()    # earlier steps we already warned were skipped
         self.wrong = set()      # steps we already warned were done wrongly
+        self.wrong_votes = {}   # step id -> how many clips reported it done wrongly
         self.working_on = None
 
     def _alert(self, kind, sid, message):
@@ -77,8 +80,12 @@ class LiveCoach:
             if sid not in self.titles:
                 continue  # the model named a step that isn't in the procedure
             if not p.get("correct", True) and sid not in self.wrong:
-                self.wrong.add(sid)
-                alerts.append(self._alert("incorrect", sid, p.get("note") or f"Step {sid} isn't right."))
+                # Clips overlap, so every moment is seen twice: only call a step wrong
+                # when two clips agree. One clip's misreading stays quiet.
+                self.wrong_votes[sid] = self.wrong_votes.get(sid, 0) + 1
+                if self.wrong_votes[sid] >= WRONG_VOTES:
+                    self.wrong.add(sid)
+                    alerts.append(self._alert("incorrect", sid, p.get("note") or f"Step {sid} isn't right."))
             if sid in self.done:
                 continue
             missing = [s["id"] for s in self.steps
@@ -115,25 +122,25 @@ class LiveCoach:
 
 
 def prepare_clip(src, dst):
-    """Browser recording (WebM or MP4) -> small slowed MP4 in one pass. The clip is
+    """Browser recording (WebM or MP4) -> small MP4 in one pass. The clip is
     untrusted, so it is opened with the same container whitelist as uploads."""
-    _ffmpeg(*SAFE_INPUT, "-i", str(src), "-an", "-vf", f"scale=-2:480,setpts={LIVE_SLOW}*PTS",
-            "-r", "10", "-c:v", "libx264", "-preset", "veryfast", "-crf", "28", "-pix_fmt", "yuv420p", str(dst))
+    _ffmpeg(*SAFE_INPUT, "-i", str(src), "-an", "-vf", "scale=-2:480", "-r", "10", "-c:v", "libx264",
+            "-preset", "veryfast", "-crf", "28", "-pix_fmt", "yuv420p", str(dst))
 
 
-async def observe_clip(engine, procedure, coach, clip, workdir):
-    """One live round trip: clip -> Muse Spark observation -> coaching alerts."""
+async def look(engine, procedure, done, clip, workdir):
+    """One clip -> what Muse Spark saw in it. Doesn't touch the coach, so several
+    clips can be looked at in parallel and applied in order afterwards."""
     analysis = Path(workdir) / f"{Path(clip).stem}_live.mp4"
     await asyncio.to_thread(prepare_clip, clip, analysis)
     url = "data:video/mp4;base64," + base64.b64encode(analysis.read_bytes()).decode()
     reference = [{k: v for k, v in s.items() if k in ("id", "title", "detail", "objects")}
                  for s in procedure["steps"]]
-    prompt = OBSERVE_PROMPT.format(done=coach.done or "none",
-                                   procedure=json.dumps(reference, indent=2))
+    prompt = OBSERVE_PROMPT.format(done=done or "none", procedure=json.dumps(reference, indent=2))
     r = await engine.client.responses.create(
         model=MODEL,
         max_output_tokens=8000,
-        reasoning={"effort": "low"},
+        reasoning={"effort": "minimal"},  # measured: same observations, about half the delay of "low"
         input=[{"type": "message", "role": "user", "content": [
             {"type": "input_text", "text": prompt},
             {"type": "input_video", "video_url": url},
@@ -143,4 +150,4 @@ async def observe_clip(engine, procedure, coach, clip, workdir):
     )
     seen = json.loads(r.output_text)
     cost = r.usage.input_tokens / 1e6 * PRICE_IN + r.usage.output_tokens / 1e6 * PRICE_OUT
-    return coach.observe(seen["performed"], seen["working_on"]), seen, cost
+    return seen, cost
