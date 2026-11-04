@@ -381,6 +381,11 @@ async function startLive() {
   const type = pickMime();
   recordClip(type, 0);
   setTimeout(() => recordClip(type, 1), CLIP_MS / 2);
+  // Also keep the whole session, so Stop can run the full three-check review on it.
+  const full = new MediaRecorder(live.stream, type ? { mimeType: type, videoBitsPerSecond: 1000000 } : undefined);
+  live.full = { rec: full, parts: [], type, done: new Promise((r) => { full.onstop = r; }) };
+  full.ondataavailable = (e) => e.data.size && live.full.parts.push(e.data);
+  full.start(1000);
 }
 
 async function stopLive() {
@@ -390,6 +395,8 @@ async function stopLive() {
   $("live-status").textContent = "Checking the last few seconds…";
   for (const rec of live.recorders) if (rec?.state === "recording") rec.stop();
   live.recorders = [];
+  if (live.full?.rec.state === "recording") live.full.rec.stop();
+  await live.full?.done;
   await new Promise((r) => setTimeout(r, 300));
   while (live.pending) await new Promise((r) => setTimeout(r, 200));
   live.stream?.getTracks().forEach((t) => t.stop());
@@ -405,6 +412,19 @@ async function stopLive() {
   } catch (err) {
     $("live-status").textContent = err.message;
   }
+  // Live alerts are quick; the full review of the whole session is the thorough one.
+  const parts = live.full?.parts || [];
+  if (parts.length) {
+    const type = live.full.rec.mimeType || live.full.type || "video/webm";
+    const file = new File(parts, type.includes("mp4") ? "live-session.mp4" : "live-session.webm", { type });
+    try {
+      const job = await upload(`/api/procedures/${procedure.id}/attempts`, file, $("check-progress"));
+      await loadReport(job.attempt_id);
+    } catch (err) {
+      showProgress($("check-progress"), `The full review didn't run: ${err.message}`, true);
+    }
+  }
+  live.full = null;
   $("live-btn").disabled = false;
 }
 

@@ -16,8 +16,10 @@ const check = (name, ok, detail = "") => {
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 
-  // 1. First visit opens on the bundled sample with a finished report
+  // 1. First visit opens on the first bundled sample with a finished report
   await page.goto(BASE, { waitUntil: "networkidle" });
+  const [first] = await page.evaluate(() => fetch("/api/samples").then((r) => r.json()));
+  const pretty = (slug) => slug.charAt(0).toUpperCase() + slug.slice(1).replace(/[-_]+/g, " ");
   await page.waitForSelector("#report:not([hidden])", { timeout: 15000 }).catch(() => {});
   check("first visit shows the sample procedure", await page.isVisible("#procedure"));
   check("first visit shows the sample report", await page.isVisible("#report"));
@@ -28,7 +30,7 @@ const check = (name, ok, detail = "") => {
     const loaded = [...document.fonts].filter((f) => f.status === "loaded").map((f) => f.family.replace(/"/g, ""));
     return ["Archivo", "Big Shoulders", "Martian Mono"].every((f) => loaded.includes(f));
   }));
-  check("URL updated with sample ids", /\?p=pack-the-tray&a=skipped-blue/.test(page.url()), page.url());
+  check("URL updated with sample ids", page.url().includes(`?p=${first.id}&a=${first.attempts[0]}`), page.url());
 
   // 2. Clicking a step card plays that step of the expert video
   const cards = await page.$$("#steps .step-card");
@@ -63,10 +65,10 @@ const check = (name, ok, detail = "") => {
   check("one spoken alert per mistake", alerts.length === expected, { alerts, expected });
 
   // 5. Sample buttons
-  await page.click("text=Sample: Skipped blue");
+  await page.click(`text=Sample: ${pretty(first.attempts[0])}`);
   await page.waitForTimeout(800);
   check("sample attempt button loads the report", await page.isVisible("#report"));
-  await page.click("text=Load sample: Pack the tray");
+  await page.click(`text=Load sample: ${pretty(first.id)}`);
   await page.waitForTimeout(800);
   check("load sample button reloads the procedure", (await page.isVisible("#procedure")) && !(await page.isVisible("#report")));
   const fresh = await browser.newPage();
@@ -99,12 +101,12 @@ const check = (name, ok, detail = "") => {
   await page.setInputFiles("#expert-file", path.join(MEDIA, "expert.mp4"));
   const sawProgress = await page.waitForSelector("#teach-progress .spin", { timeout: 10000 }).then(() => true).catch(() => false);
   check("progress shown while learning", sawProgress);
-  await page.waitForFunction(() => document.getElementById("teach-progress").hidden
-      && !/pack-the-tray/.test(location.search), null, { timeout: 300000 });
+  await page.waitForFunction((firstId) => document.getElementById("teach-progress").hidden
+      && !location.search.includes(firstId), first.id, { timeout: 300000 });
   const pid = new URL(page.url()).searchParams.get("p");
   check("progress spinner disappears when done", !(await page.isVisible("#teach-progress")));
   check("old report is not shown for the new procedure", !(await page.isVisible("#report")));
-  check("teaching a new procedure shows its steps", pid && pid !== "pack-the-tray" && (await page.$$("#steps .step-card")).length >= 1, page.url());
+  check("teaching a new procedure shows its steps", pid && pid !== first.id && (await page.$$("#steps .step-card")).length >= 1, page.url());
   await page.setInputFiles("#attempt-file", path.join(MEDIA, "trainee.mp4"));
   await page.waitForSelector("#check-progress .spin", { timeout: 10000 }).catch(() => {});
   const reported = await page.waitForFunction(() => new URLSearchParams(location.search).get("a"), null, { timeout: 400000 }).then(() => true).catch(() => false);

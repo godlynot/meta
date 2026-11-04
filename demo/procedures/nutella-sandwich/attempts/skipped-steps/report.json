@@ -1,0 +1,336 @@
+{
+  "steps": [
+    {
+      "id": 1,
+      "status": "done",
+      "start_s": 1.7,
+      "end_s": 7.3,
+      "evidence": "Trainee opens plastic bread bag on counter, pulls out bread and places two white slices side-by-side on the brown cutting board",
+      "fix": "",
+      "agreement": "3/3",
+      "alert_s": null,
+      "title": "Take out two bread slices",
+      "critical": false
+    },
+    {
+      "id": 2,
+      "status": "skipped",
+      "start_s": null,
+      "end_s": null,
+      "evidence": "Bread bag is left open on counter for entire video; no gathering, twisting, or clip application is ever seen",
+      "fix": "Gather the top of the bag, twist it closed and secure it with the clip after removing slices.",
+      "agreement": "3/3",
+      "alert_s": 8.7,
+      "title": "Close the bread bag",
+      "critical": false,
+      "frame": "frames/issue2.jpg",
+      "outlined": false
+    },
+    {
+      "id": 3,
+      "status": "done",
+      "start_s": 8.7,
+      "end_s": 12.0,
+      "evidence": "Trainee holds Nutella jar with both hands, twists white lid counterclockwise and lifts it off, then sets open jar down",
+      "fix": "",
+      "agreement": "3/3",
+      "alert_s": null,
+      "title": "Open the Nutella jar",
+      "critical": false
+    },
+    {
+      "id": 4,
+      "status": "done",
+      "start_s": 14.0,
+      "end_s": 16.7,
+      "evidence": "Trainee reaches off-camera to side and returns holding a small knife which is then used to scoop Nutella",
+      "fix": "",
+      "agreement": "2/3",
+      "alert_s": null,
+      "title": "Get a knife",
+      "critical": false
+    },
+    {
+      "id": 5,
+      "status": "done",
+      "start_s": 16.3,
+      "end_s": 28.7,
+      "evidence": "Trainee scoops Nutella from open jar with knife and spreads brown coating across face of slice held in left hand, then places it on board",
+      "fix": "",
+      "agreement": "3/3",
+      "alert_s": null,
+      "title": "Spread Nutella on bread",
+      "critical": false
+    },
+    {
+      "id": 6,
+      "status": "incorrect",
+      "start_s": 39.0,
+      "end_s": 44.3,
+      "evidence": "Trainee never places whole plain slice onto whole spread slice; instead places cut plain pieces onto cut Nutella halves to make small stacks",
+      "fix": "Place the whole plain slice onto the whole spread slice and press to form one sandwich before cutting.",
+      "agreement": "3/3",
+      "alert_s": 39.0,
+      "title": "Assemble the sandwich",
+      "critical": false,
+      "frame": "frames/issue6.jpg",
+      "outlined": true
+    },
+    {
+      "id": 7,
+      "status": "incorrect",
+      "start_s": 29.0,
+      "end_s": 35.5,
+      "evidence": "Trainee saws knife through single Nutella-covered slice on board cutting it in half before any sandwich is assembled, not cutting an assembled sandwich",
+      "fix": "Assemble the sandwich first, then cut the assembled sandwich in half and separate the halves.",
+      "agreement": "2/3",
+      "alert_s": 29.0,
+      "title": "Cut sandwich in half",
+      "critical": false,
+      "frame": "frames/issue7.jpg",
+      "outlined": true
+    },
+    {
+      "id": 8,
+      "status": "skipped",
+      "start_s": null,
+      "end_s": null,
+      "evidence": "Open Nutella jar remains in foreground with no lid replaced through end of video; no closing action seen",
+      "fix": "Place the lid back on the Nutella jar and screw it closed after finishing.",
+      "agreement": "3/3",
+      "alert_s": 47.5,
+      "title": "Close the Nutella jar",
+      "critical": false,
+      "frame": "frames/issue8.jpg",
+      "outlined": true
+    }
+  ],
+  "extra_actions": [
+    "Cut the single Nutella-covered slice in half on the board before any sandwich was assembled",
+    "Cut the plain bread slice in half separately",
+    "Stacked cut halves to make two mini half-sandwiches instead of one whole sandwich"
+  ],
+  "votes": 3,
+  "duration_s": 48.0,
+  "cost_usd": 0.222,
+  "runs": [
+    {
+      "extra_actions": [
+        "Cut the single Nutella-covered slice in half on the board before any sandwich was assembled",
+        "Cut the plain bread slice in half separately",
+        "Stacked cut halves to make two mini half-sandwiches instead of one whole sandwich"
+      ],
+      "steps": [
+        {
+          "end_s": 7.5,
+          "evidence": "Trainee opens plastic bread bag on counter, pulls out bread and places two white slices side-by-side on the brown cutting board",
+          "fix": "",
+          "id": 1,
+          "start_s": 1.7,
+          "status": "done"
+        },
+        {
+          "end_s": null,
+          "evidence": "Bread bag is left open on counter for entire video; no gathering, twisting, or clip application is ever seen",
+          "fix": "Gather the top of the bag, twist it closed and secure it with the clip after removing slices.",
+          "id": 2,
+          "start_s": null,
+          "status": "skipped"
+        },
+        {
+          "end_s": 12.2,
+          "evidence": "Trainee holds Nutella jar with both hands, twists white lid counterclockwise and lifts it off, then sets open jar down",
+          "fix": "",
+          "id": 3,
+          "start_s": 8.7,
+          "status": "done"
+        },
+        {
+          "end_s": 16.7,
+          "evidence": "Trainee reaches off-camera to side and returns holding a small knife which is then used to scoop Nutella",
+          "fix": "",
+          "id": 4,
+          "start_s": 14.0,
+          "status": "done"
+        },
+        {
+          "end_s": 28.7,
+          "evidence": "Trainee scoops Nutella from open jar with knife and spreads brown coating across face of slice held in left hand, then places it on board",
+          "fix": "",
+          "id": 5,
+          "start_s": 16.3,
+          "status": "done"
+        },
+        {
+          "end_s": 44.0,
+          "evidence": "Trainee never places whole plain slice onto whole spread slice; instead places cut plain pieces onto cut Nutella halves to make small stacks",
+          "fix": "Place the whole plain slice onto the whole spread slice and press to form one sandwich before cutting.",
+          "id": 6,
+          "start_s": 39.0,
+          "status": "incorrect"
+        },
+        {
+          "end_s": 32.7,
+          "evidence": "Trainee saws knife through single Nutella-covered slice on board cutting it in half before any sandwich is assembled, not cutting an assembled sandwich",
+          "fix": "Assemble the sandwich first, then cut the assembled sandwich in half and separate the halves.",
+          "id": 7,
+          "start_s": 29.0,
+          "status": "incorrect"
+        },
+        {
+          "end_s": null,
+          "evidence": "Open Nutella jar remains in foreground with no lid replaced through end of video; no closing action seen",
+          "fix": "Place the lid back on the Nutella jar and screw it closed after finishing.",
+          "id": 8,
+          "start_s": null,
+          "status": "skipped"
+        }
+      ]
+    },
+    {
+      "extra_actions": [
+        "Cut the plain bread slice in half separately before any assembly",
+        "Held up the finished sandwich halves to the camera for display"
+      ],
+      "steps": [
+        {
+          "end_s": 7.3,
+          "evidence": "Opens plastic bread bag on counter, removes two white bread slices and lays them side by side on brown cutting board.",
+          "fix": "",
+          "id": 1,
+          "start_s": 1.7,
+          "status": "done"
+        },
+        {
+          "end_s": null,
+          "evidence": "Bread bag left open on counter to left throughout video; no gathering, twisting or clip-securing ever seen.",
+          "fix": "Gather the bag top, twist it closed and secure it with the clip after taking slices.",
+          "id": 2,
+          "start_s": null,
+          "status": "skipped"
+        },
+        {
+          "end_s": 12.0,
+          "evidence": "Picks up Nutella jar with both hands and unscrews white lid to expose chocolate spread.",
+          "fix": "",
+          "id": 3,
+          "start_s": 8.7,
+          "status": "done"
+        },
+        {
+          "end_s": 16.3,
+          "evidence": "Knife with spread suddenly appears in hand; reach toward counter is off-camera so pickup from dish rack is never actually seen.",
+          "fix": "Turn to the counter and visibly pick up the knife from the dish rack before scooping.",
+          "id": 4,
+          "start_s": 14.0,
+          "status": "uncertain"
+        },
+        {
+          "end_s": 28.7,
+          "evidence": "Scoops Nutella with knife and spreads brown coating across one side of bread slice held in left hand, then places slice on board.",
+          "fix": "",
+          "id": 5,
+          "start_s": 16.0,
+          "status": "done"
+        },
+        {
+          "end_s": 44.3,
+          "evidence": "Stacks pre-cut plain halves onto pre-cut Nutella halves to make mini sandwiches instead of stacking two whole slices before cutting.",
+          "fix": "Assemble first by placing the whole plain slice onto the whole spread slice and press to form a sandwich.",
+          "id": 6,
+          "start_s": 39.0,
+          "status": "incorrect"
+        },
+        {
+          "end_s": 32.3,
+          "evidence": "Cuts with knife on board at 87-97s before any sandwich is assembled, cutting a single spread slice rather than an assembled sandwich.",
+          "fix": "Wait until after assembly, then cut the assembled two-slice sandwich in half and separate halves.",
+          "id": 7,
+          "start_s": 29.0,
+          "status": "out_of_order"
+        },
+        {
+          "end_s": null,
+          "evidence": "Open Nutella jar remains in foreground to end of video; lid is never replaced or screwed closed.",
+          "fix": "Place the lid back on the Nutella jar and screw it closed after finishing.",
+          "id": 8,
+          "start_s": null,
+          "status": "skipped"
+        }
+      ]
+    },
+    {
+      "extra_actions": [
+        "Cut the single Nutella-spread slice in half before any assembly",
+        "Cut the plain bread slice in half separately",
+        "Stacked pre-cut halves to make two small half-sandwiches instead of one whole sandwich"
+      ],
+      "steps": [
+        {
+          "end_s": 7.3,
+          "evidence": "Opens plastic bread bag and pulls out bread, then places two white slices side-by-side on the brown cutting board.",
+          "fix": "",
+          "id": 1,
+          "start_s": 1.7,
+          "status": "done"
+        },
+        {
+          "end_s": null,
+          "evidence": "Bread bag is left open on the counter; no gathering, twisting, or clip use is ever seen.",
+          "fix": "Close the bread bag by gathering the top, twisting it shut, and securing it with the clip.",
+          "id": 2,
+          "start_s": null,
+          "status": "skipped"
+        },
+        {
+          "end_s": 12.0,
+          "evidence": "Holds brown Nutella jar with both hands and twists white lid counter-clockwise to remove it and expose the spread.",
+          "fix": "",
+          "id": 3,
+          "start_s": 9.0,
+          "status": "done"
+        },
+        {
+          "end_s": 16.7,
+          "evidence": "Reaches off-camera and returns with a table knife already coated with Nutella, which is then used for spreading.",
+          "fix": "",
+          "id": 4,
+          "start_s": 14.0,
+          "status": "done"
+        },
+        {
+          "end_s": 28.7,
+          "evidence": "Holds one bread slice in hand and scoops Nutella with knife, spreading brown coating across one side of the slice.",
+          "fix": "",
+          "id": 5,
+          "start_s": 18.0,
+          "status": "done"
+        },
+        {
+          "end_s": 44.3,
+          "evidence": " \u043d\u0438\u043a\u043e\u0433\u0434\u0430 places a whole plain slice onto a whole spread slice; instead stacks small plain halves onto Nutella halves after cutting.",
+          "fix": "Place the whole plain slice onto the whole spread slice and press to form one sandwich before cutting.",
+          "id": 6,
+          "start_s": 42.3,
+          "status": "incorrect"
+        },
+        {
+          "end_s": 38.3,
+          "evidence": "Uses knife to saw through a single spread slice and then a single plain slice separately, never cutting an assembled sandwich in half.",
+          "fix": "Assemble the full sandwich first, then cut the assembled sandwich in half and separate the halves.",
+          "id": 7,
+          "start_s": 29.0,
+          "status": "incorrect"
+        },
+        {
+          "end_s": null,
+          "evidence": "Open Nutella jar remains on counter through end; lid is never picked up or screwed back on.",
+          "fix": "Place the lid back on the Nutella jar and screw it closed after use.",
+          "id": 8,
+          "start_s": null,
+          "status": "skipped"
+        }
+      ]
+    }
+  ]
+}

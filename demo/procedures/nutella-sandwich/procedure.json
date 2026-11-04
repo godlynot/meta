@@ -1,0 +1,123 @@
+{
+  "steps": [
+    {
+      "critical": false,
+      "detail": "Open the bread bag and remove two slices, placing them on the cutting board",
+      "end_s": 18.3,
+      "id": 1,
+      "objects": [
+        "bread slice",
+        "bread bag",
+        "cutting board"
+      ],
+      "start_s": 11.0,
+      "title": "Take out two bread slices",
+      "frame": "frames/step1.jpg",
+      "outlined": true
+    },
+    {
+      "critical": false,
+      "detail": "Gather the top of the bread bag, twist it closed and secure it with the clip",
+      "end_s": 30.7,
+      "id": 2,
+      "objects": [
+        "bread bag",
+        "bag clip"
+      ],
+      "start_s": 19.0,
+      "title": "Close the bread bag",
+      "frame": "frames/step2.jpg",
+      "outlined": false
+    },
+    {
+      "critical": false,
+      "detail": "Pick up the Nutella jar and unscrew the lid to open it",
+      "end_s": 42.0,
+      "id": 3,
+      "objects": [
+        "Nutella jar",
+        "jar lid"
+      ],
+      "start_s": 37.7,
+      "title": "Open the Nutella jar",
+      "frame": "frames/step3.jpg",
+      "outlined": true
+    },
+    {
+      "critical": false,
+      "detail": "Turn to the counter and pick up a knife for spreading",
+      "end_s": 48.7,
+      "id": 4,
+      "objects": [
+        "knife",
+        "dish rack"
+      ],
+      "start_s": 46.0,
+      "title": "Get a knife",
+      "frame": "frames/step4.jpg",
+      "outlined": false
+    },
+    {
+      "critical": false,
+      "detail": "Scoop Nutella with the knife and spread it evenly on one side of one slice",
+      "end_s": 77.3,
+      "id": 5,
+      "objects": [
+        "knife",
+        "bread slice",
+        "Nutella jar"
+      ],
+      "start_s": 53.7,
+      "title": "Spread Nutella on bread",
+      "frame": "frames/step5.jpg",
+      "outlined": false
+    },
+    {
+      "critical": false,
+      "detail": "Place the plain slice onto the spread slice and press to form a sandwich",
+      "end_s": 87.0,
+      "id": 6,
+      "objects": [
+        "bread slice",
+        "sandwich",
+        "cutting board"
+      ],
+      "start_s": 81.3,
+      "title": "Assemble the sandwich",
+      "frame": "frames/step6.jpg",
+      "outlined": true
+    },
+    {
+      "critical": false,
+      "detail": "Use the knife to cut the assembled sandwich in half and separate the halves",
+      "end_s": 97.7,
+      "id": 7,
+      "objects": [
+        "knife",
+        "sandwich",
+        "cutting board"
+      ],
+      "start_s": 89.3,
+      "title": "Cut sandwich in half",
+      "frame": "frames/step7.jpg",
+      "outlined": true
+    },
+    {
+      "critical": false,
+      "detail": "Place the lid back on the Nutella jar and screw it closed",
+      "end_s": 107.0,
+      "id": 8,
+      "objects": [
+        "Nutella jar",
+        "jar lid"
+      ],
+      "start_s": 101.0,
+      "title": "Close the Nutella jar",
+      "frame": "frames/step8.jpg",
+      "outlined": true
+    }
+  ],
+  "task": "Make a Nutella sandwich",
+  "cost_usd": 0.1363,
+  "duration_s": 110.5
+}

@@ -46,10 +46,11 @@ a hands-on procedure. The reference steps are below.
 Steps already seen completed earlier in the session: {done}.
 
 List every reference step you SEE being performed or completed in this clip, in the
-order it happens. For each, say whether it was done correctly; if not, say what was
-wrong in a short note written to the trainee ("The Nutella went on the outside").
-Only report what actually happens in this clip; do not repeat steps from earlier
-unless they are clearly done again. Also give the id of the step the trainee seems
+order it happens. A step that only fetches a tool counts as done if the tool is already
+in the trainee's hand. For every other step, only count it if you see the action itself.
+For each, say whether it was done correctly; if not, say what was wrong in a short note
+written to the trainee, describing only what you saw. Report only what is in
+this clip; do not repeat steps from earlier unless they are clearly done again. Also give the id of the step the trainee seems
 to be working on at the end of the clip, or null if you can't tell.
 
 Reference procedure:

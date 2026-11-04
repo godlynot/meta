@@ -35,7 +35,11 @@ const check = (n, ok, d = "") => { results.push(!!ok); console.log(`${ok ? "PASS
   check("skipped blue square flagged", stamps[1] === "skipped", stamps);
   check("alerts mention step 2", spoken.some((t) => /step 2/i.test(t)), spoken);
   check("camera released after stop", await page.evaluate(() => !live.stream || live.stream.getTracks().every((t) => t.readyState === "ended")));
-  check("start button usable again", await page.isEnabled("#live-btn"));
+  const reviewed = await page.waitForSelector("#report:not([hidden])", { timeout: 240000 }).then(() => true).catch(() => false);
+  check("full review of the whole session appears after stop", reviewed);
+  if (reviewed) check("full review flags the skipped blue square",
+    (await page.$$eval(".issue h4", (e) => e.map((x) => x.textContent))).some((t) => /Step 2/.test(t)));
+  check("start button usable again after the review", await page.isEnabled("#live-btn"));
   const trips = await page.evaluate(() => window.__trips);
   console.log("clip round trips (ms):", trips);
   check("a new clip is sent about every 4 seconds", trips.length >= 4, trips);

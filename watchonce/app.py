@@ -28,6 +28,7 @@ JOBS_PER_DAY = int(os.environ.get("JOBS_PER_DAY", "80"))
 MAX_LIVE_CLIPS = int(os.environ.get("MAX_LIVE_CLIPS", "90"))  # about 6 minutes at one clip every 4 s
 LIVE_IDLE_S = 15 * 60
 ID = re.compile(r"[A-Za-z0-9_-]{1,64}")
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("watchonce")
 
 # Fonts are the only third-party resource the page loads.
@@ -310,6 +311,7 @@ async def live_clip(pid: str, sid: str, file: UploadFile):
         # clips), then applied to the running record strictly in clip order.
         seen, cost = await look(get_engine(), session["procedure"], list(session["coach"].done),
                                 clip, session["dir"])
+        log.info("live %s clip %d saw %s", sid, n, json.dumps(seen))
     except HTTPException as e:
         failure = e
     except Exception:
