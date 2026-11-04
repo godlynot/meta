@@ -344,6 +344,7 @@ class Engine:
             _unslow(run["steps"], SLOW)
 
         length = duration(video)
+        await asyncio.to_thread(frame_at, video, min(1.0, length / 2), workdir / "poster.jpg")
         steps = vote(runs, [s["id"] for s in procedure["steps"]])
         alert_times(steps, length)
         by_id = {s["id"]: s for s in procedure["steps"]}

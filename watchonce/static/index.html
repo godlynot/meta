@@ -2,68 +2,79 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Watch Once</title>
+<meta name="description" content="Film an expert doing a task once, then check anyone's attempt step by step.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Big+Shoulders:wght@700;800&family=Martian+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<header>
-  <h1>Watch Once</h1>
-  <p class="tagline">Film an expert doing a task once. Then check anyone's attempt: which steps they skipped, swapped or got wrong, with the expert's clip showing how it's done.</p>
+<header class="wrap">
+  <h1 class="wordmark">Watch <span class="framed">Once</span></h1>
+  <p class="tagline">Film an expert doing a hands-on task once. Then check anyone's attempt: which steps they skipped, swapped or got wrong, with the expert's clip showing how it's done.</p>
   <p class="powered">Muse Spark watches the videos · SAM 3.1 outlines the evidence</p>
 </header>
 
-<main>
-  <section id="teach" class="panel">
-    <h2><span class="num">1</span> Teach it once</h2>
-    <p class="hint">Upload a video of someone doing the task correctly, ideally saying each step out loud. Up to 3 minutes.</p>
-    <div class="actions">
-      <label class="button primary">Upload expert video
-        <input type="file" accept="video/*" id="expert-file" hidden>
-      </label>
-      <span id="sample-procedures"></span>
+<main class="wrap">
+  <section id="teach" class="stage" aria-labelledby="teach-title">
+    <div class="stage-head">
+      <span class="stage-num" aria-hidden="true">1</span>
+      <h2 id="teach-title">Teach it once</h2>
+      <p class="hint">Upload a video of someone doing the task correctly, ideally saying each step out loud. Up to 3 minutes.</p>
     </div>
-    <div id="teach-progress" class="progress" hidden></div>
-    <div id="procedure" hidden>
-      <h3 id="task-title"></h3>
+    <div class="actions">
+      <button class="button primary" type="button" id="expert-btn">Upload expert video</button>
+      <input type="file" accept="video/*" id="expert-file" hidden>
+      <span id="sample-procedures" class="actions"></span>
+    </div>
+    <div id="teach-progress" class="progress" role="status" hidden></div>
+    <div id="procedure" class="stack" hidden>
+      <p class="task-title" id="task-title"></p>
       <video id="expert-video" controls playsinline preload="metadata"></video>
       <ol id="steps" class="steps"></ol>
     </div>
   </section>
 
-  <section id="check" class="panel" hidden>
-    <h2><span class="num">2</span> Check an attempt</h2>
-    <p class="hint">Upload a video of someone else doing the same task. Every verdict is agreed by a majority of independent checks.</p>
-    <div class="actions">
-      <label class="button primary">Upload attempt
-        <input type="file" accept="video/*" id="attempt-file" hidden>
-      </label>
-      <span id="sample-attempts"></span>
+  <section id="check" class="stage" aria-labelledby="check-title" hidden>
+    <div class="stage-head">
+      <span class="stage-num" aria-hidden="true">2</span>
+      <h2 id="check-title">Check an attempt</h2>
+      <p class="hint">Upload someone else doing the same task. Three independent checks look at every step, and only verdicts most of them agree on are reported.</p>
     </div>
-    <div id="check-progress" class="progress" hidden></div>
-    <div id="report" hidden>
-      <p id="summary" class="summary"></p>
-      <div class="replay">
-        <div class="player">
-          <video id="attempt-video" playsinline preload="metadata"></video>
-          <div id="coach" class="coach" hidden></div>
-        </div>
-        <button id="replay" class="button primary">▶ Replay with coach</button>
+    <div class="actions">
+      <button class="button primary" type="button" id="attempt-btn">Upload attempt</button>
+      <input type="file" accept="video/*" id="attempt-file" hidden>
+      <span id="sample-attempts" class="actions"></span>
+    </div>
+    <div id="check-progress" class="progress" role="status" hidden></div>
+    <div id="report" class="stack" hidden>
+      <div class="scoreline">
+        <div class="score" id="score"></div>
+        <div class="score-text"><strong id="score-main"></strong><span id="score-sub"></span></div>
+      </div>
+      <div class="player">
+        <video id="attempt-video" playsinline preload="metadata"></video>
+        <div id="coach" class="coach" role="alert" hidden></div>
+      </div>
+      <div class="replay-row">
+        <button id="replay" class="button primary" type="button">▶ Replay with coach</button>
         <p class="hint">Plays the attempt back and speaks up at the moment each mistake happens.</p>
       </div>
       <h3>What to fix</h3>
-      <div id="issues"></div>
+      <div id="issues" class="issues"></div>
       <h3>Every step</h3>
       <ol id="checklist" class="checklist"></ol>
-      <div id="extras"></div>
+      <div id="extras" class="extras"></div>
       <p id="cost" class="fineprint"></p>
     </div>
   </section>
 </main>
 
-<footer>
+<footer class="wrap">
   Built for the Meta Global AI Developer Hackathon 2026 ·
-  <a href="https://github.com/godlynot/meta">Source</a>
+  <a href="https://github.com/godlynot/meta">Source on GitHub</a>
 </footer>
 <script src="/static/app.js"></script>
 </body>
