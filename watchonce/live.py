@@ -123,6 +123,14 @@ class LiveCoach:
         return {"status": status, "working_on": self.working_on, "done": len(self.done), "total": len(self.steps)}
 
 
+def is_small_mp4(path, limit=10 * 1024 * 1024):
+    """Phones and Chrome record MP4 already; those clips can go to Muse Spark as they
+    are, which skips a re-encode that took most of the time on a small server."""
+    p = Path(path)
+    with open(p, "rb") as f:
+        return f.read(12)[4:8] == b"ftyp" and p.stat().st_size < limit
+
+
 def prepare_clip(src, dst):
     """Browser recording (WebM or MP4) -> small MP4 in one pass. The clip is
     untrusted, so it is opened with the same container whitelist as uploads."""
@@ -134,7 +142,10 @@ async def look(engine, procedure, done, clip, workdir):
     """One clip -> what Muse Spark saw in it. Doesn't touch the coach, so several
     clips can be looked at in parallel and applied in order afterwards."""
     analysis = Path(workdir) / f"{Path(clip).stem}_live.mp4"
-    await asyncio.to_thread(prepare_clip, clip, analysis)
+    if is_small_mp4(clip):
+        analysis = Path(clip)
+    else:
+        await asyncio.to_thread(prepare_clip, clip, analysis)
     url = "data:video/mp4;base64," + base64.b64encode(analysis.read_bytes()).decode()
     reference = [{k: v for k, v in s.items() if k in ("id", "title", "detail", "objects")}
                  for s in procedure["steps"]]

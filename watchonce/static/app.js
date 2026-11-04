@@ -371,7 +371,7 @@ async function sendClip(blob, type) {
 function recordClip(type, lane) {
   if (!live.running) return;
   const parts = [];
-  const rec = new MediaRecorder(live.stream, type ? { mimeType: type, videoBitsPerSecond: 1500000 } : undefined);
+  const rec = new MediaRecorder(live.stream, type ? { mimeType: type, videoBitsPerSecond: 900000 } : undefined);
   live.recorders[lane] = rec;
   rec.ondataavailable = (e) => e.data.size && parts.push(e.data);
   rec.onstop = () => {
@@ -391,7 +391,8 @@ async function startLive() {
   stopReplay();
   try {
     live.stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false,
+      // 640x480 is plenty for the model and keeps each clip small and quick to send.
+      video: { facingMode: { ideal: "environment" }, width: { ideal: 640 }, height: { ideal: 480 } }, audio: false,
     });
   } catch (err) {
     showProgress($("check-progress"), "Camera access was blocked. Allow the camera for this site and try again.", true);
