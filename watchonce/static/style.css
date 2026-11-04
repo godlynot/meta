@@ -261,3 +261,19 @@ footer { padding-block: 20px 48px; color: var(--ink-2); font-size: 0.85rem; }
   html { scroll-behavior: auto; }
 }
 .stack { display: grid; gap: 16px; min-width: 0; }
+
+/* Live coaching */
+.live-badge {
+  position: absolute; top: 12px; left: 12px;
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--scrim); color: #FFFFFF; border-radius: 3px; padding: 3px 8px;
+  font: 500 0.7rem/1.4 var(--mono); letter-spacing: 0.08em; text-transform: uppercase;
+}
+.live-badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #E5483B; }
+.live-badge.off::before { background: #9AA3A5; }
+.checklist li.now { background: color-mix(in srgb, var(--outline) 14%, transparent); }
+.stamp.pending { color: var(--ink-2); border-style: dotted; }
+@media (prefers-reduced-motion: no-preference) {
+  .live-badge:not(.off)::before { animation: blink 1.2s steps(2, start) infinite; }
+}
+@keyframes blink { to { visibility: hidden; } }

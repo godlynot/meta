@@ -16,6 +16,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from .core import Engine, VideoError, duration, normalize
+from .live import LiveCoach, observe_clip
 
 HERE = Path(__file__).parent
 DATA = Path(os.environ.get("DATA_DIR", HERE.parent / "data")) / "procedures"
@@ -24,6 +25,8 @@ MAX_UPLOAD_MB = int(os.environ.get("MAX_UPLOAD_MB", "300"))
 MAX_VIDEO_S = int(os.environ.get("MAX_VIDEO_S", "180"))
 JOBS_PER_HOUR_PER_IP = int(os.environ.get("JOBS_PER_HOUR_PER_IP", "8"))
 JOBS_PER_DAY = int(os.environ.get("JOBS_PER_DAY", "80"))
+MAX_LIVE_CLIPS = int(os.environ.get("MAX_LIVE_CLIPS", "45"))  # about 6 minutes of 8-second clips
+LIVE_IDLE_S = 15 * 60
 ID = re.compile(r"[A-Za-z0-9_-]{1,64}")
 log = logging.getLogger("watchonce")
 
@@ -31,12 +34,12 @@ log = logging.getLogger("watchonce")
 SECURITY_HEADERS = {
     "Content-Security-Policy": (
         "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; "
-        "font-src https://fonts.gstatic.com; img-src 'self' data:; media-src 'self'; connect-src 'self'; "
+        "font-src https://fonts.gstatic.com; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; "
         "object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
     ),
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "no-referrer",
-    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Permissions-Policy": "camera=(self), microphone=(), geolocation=()",
 }
 
 DATA.mkdir(parents=True, exist_ok=True)
@@ -57,6 +60,7 @@ engine = None
 jobs = {}
 running = set()  # keep task references alive
 recent_by_ip = defaultdict(deque)
+live_sessions = {}
 daily = {"day": None, "count": 0}
 
 
@@ -252,3 +256,74 @@ async def get_attempt(pid: str, aid: str):
             data.pop("runs", None)
             return {**data, "id": aid, "media": f"{base}/{pid}/attempts/{aid}"}
     raise HTTPException(404, "Unknown attempt")
+
+
+# Live coaching: the page records a few seconds at a time and posts each clip.
+# A session counts as one job against the rate limits, and is capped in length.
+
+@app.post("/api/procedures/{pid}/live")
+async def start_live(pid: str, request: Request):
+    get_engine()
+    folder, _ = find(pid)
+    now = time.time()
+    for sid in [s for s, v in live_sessions.items() if now - v["seen"] > LIVE_IDLE_S]:
+        shutil.rmtree(live_sessions.pop(sid)["dir"], ignore_errors=True)
+    allow(request)
+    procedure = json.loads((folder / "procedure.json").read_text())
+    sid = secrets.token_urlsafe(9)
+    workdir = DATA.parent / "live" / sid
+    workdir.mkdir(parents=True)
+    live_sessions[sid] = {"pid": pid, "procedure": procedure, "coach": LiveCoach(procedure["steps"]),
+                          "clips": 0, "cost": 0.0, "lock": asyncio.Lock(), "seen": now, "dir": workdir}
+    return {"session": sid, "state": live_sessions[sid]["coach"].state()}
+
+
+def live_session(pid, sid):
+    check_id(pid)
+    check_id(sid)
+    session = live_sessions.get(sid)
+    if not session or session["pid"] != pid:
+        raise HTTPException(404, "This live session has ended. Start a new one.")
+    session["seen"] = time.time()
+    return session
+
+
+@app.post("/api/procedures/{pid}/live/{sid}/clips")
+async def live_clip(pid: str, sid: str, file: UploadFile):
+    session = live_session(pid, sid)
+    if session["clips"] >= MAX_LIVE_CLIPS:
+        raise HTTPException(429, "Live sessions stop after about 6 minutes. Press Stop to see the results.")
+    session["clips"] += 1
+    n = session["clips"]  # this request's own clip number; later clips may arrive while we wait
+    clip = session["dir"] / f"clip{n}.bin"
+    limit, size = 40 * 1024 * 1024, 0
+    with open(clip, "wb") as out:
+        while chunk := await file.read(1024 * 1024):
+            size += len(chunk)
+            if size > limit:
+                raise HTTPException(413, "That clip was too large")
+            out.write(chunk)
+    async with session["lock"]:  # keep the running record in clip order
+        try:
+            alerts, seen, cost = await observe_clip(get_engine(), session["procedure"], session["coach"],
+                                                    clip, session["dir"])
+            session["cost"] += cost
+            error = None
+        except Exception:
+            log.exception("live clip failed in session %s", sid)
+            alerts, error = [], "Missed that moment. Still watching."
+        finally:
+            for f in session["dir"].glob(f"clip{n}[._]*"):
+                f.unlink(missing_ok=True)
+    return {"alerts": alerts, "state": session["coach"].state(), "error": error}
+
+
+@app.post("/api/procedures/{pid}/live/{sid}/end")
+async def end_live(pid: str, sid: str):
+    session = live_session(pid, sid)
+    async with session["lock"]:
+        alerts = session["coach"].finish()
+        state = session["coach"].state()
+    live_sessions.pop(sid, None)
+    shutil.rmtree(session["dir"], ignore_errors=True)
+    return {"alerts": alerts, "state": state, "clips": session["clips"], "cost_usd": round(session["cost"], 4)}

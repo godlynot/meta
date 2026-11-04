@@ -104,6 +104,8 @@ async function loadProcedure(pid) {
   for (const card of $("steps").querySelectorAll(".step-card")) {
     card.onclick = () => playRange(video, +card.dataset.start, +card.dataset.end);
   }
+  if (live.running) await stopLive();
+  $("live").hidden = true;
   $("procedure").hidden = false;
   $("check").hidden = false;
   $("report").hidden = true;
@@ -173,6 +175,7 @@ async function loadReport(aid, scroll = true) {
   $("extras").innerHTML = report.extra_actions.length
     ? `<h3>Not in the procedure</h3><ul>${report.extra_actions.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : "";
   $("cost").textContent = `Checked ${report.votes} times by Muse Spark. This analysis cost about $${report.cost_usd.toFixed(2)}.`;
+  if (!live.running) $("live").hidden = true;
   $("report").hidden = false;
   setUrl();
   if (scroll) $("report").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -261,6 +264,148 @@ $("expert-file").onchange = (e) => pickFile(e.target, "/api/procedures", $("teac
 $("attempt-file").onchange = (e) => procedure && pickFile(e.target, `/api/procedures/${procedure.id}/attempts`,
   $("check-progress"), (job) => loadReport(job.attempt_id));
 $("replay").onclick = replay;
+
+// Live coaching: record the camera in short clips, send each one, speak the alerts.
+const CLIP_MS = 8000;
+const live = { running: false, session: null, stream: null, recorder: null, pending: 0, queue: [], speaking: false };
+const LIVE_LABEL = { ...LABEL, pending: "Not yet" };
+
+function pickMime() {
+  const options = ["video/mp4", "video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
+  return options.find((m) => window.MediaRecorder?.isTypeSupported?.(m)) || "";
+}
+
+function renderLive(state) {
+  $("live-steps").innerHTML = procedure.steps.map((s) => {
+    const st = state.status[s.id] || "pending";
+    return `<li class="${state.working_on === s.id ? "now" : ""}">
+      <span class="n step-no">${two(s.id)}</span>
+      <span class="what">${esc(s.title)} <span class="stamp ${st}">${LIVE_LABEL[st]}</span></span>
+    </li>`;
+  }).join("");
+}
+
+async function speakQueue() {
+  if (live.speaking) return;
+  live.speaking = true;
+  const coach = $("live-coach");
+  while (live.queue.length) {
+    const a = live.queue.shift();
+    const tag = a.kind === "incorrect" ? "Stop" : "Hold on";
+    coach.innerHTML = `<span class="tag">${esc(tag)}</span><strong>${esc(a.message)}</strong><span>${esc(a.title)}</span>`;
+    coach.hidden = false;
+    await say(`${tag}. ${a.message}`);
+    await new Promise((r) => setTimeout(r, 600));
+  }
+  coach.hidden = true;
+  live.speaking = false;
+}
+
+function pushAlerts(alerts) {
+  if (!alerts?.length) return;
+  live.queue.push(...alerts);
+  speakQueue();
+}
+
+async function sendClip(blob, type) {
+  live.pending++;
+  const form = new FormData();
+  form.append("file", blob, type.startsWith("video/mp4") ? "clip.mp4" : "clip.webm");
+  try {
+    const r = await api(`/api/procedures/${procedure.id}/live/${live.session}/clips`, { method: "POST", body: form });
+    renderLive(r.state);
+    pushAlerts(r.alerts);
+    $("live-status").textContent = r.error
+      || `Watching. ${r.state.done} of ${r.state.total} steps seen so far.`;
+  } catch (err) {
+    $("live-status").textContent = err.message;
+    if (/ended|6 minutes/.test(err.message)) stopLive();
+  } finally {
+    live.pending--;
+  }
+}
+
+function recordClip(type) {
+  if (!live.running) return;
+  const parts = [];
+  const rec = new MediaRecorder(live.stream, type ? { mimeType: type, videoBitsPerSecond: 1500000 } : undefined);
+  live.recorder = rec;
+  rec.ondataavailable = (e) => e.data.size && parts.push(e.data);
+  rec.onstop = () => {
+    if (parts.length) sendClip(new Blob(parts, { type: rec.mimeType || type }), rec.mimeType || type);
+    recordClip(type);  // start the next clip straight away so nothing is missed
+  };
+  rec.start();
+  setTimeout(() => rec.state === "recording" && rec.stop(), CLIP_MS);
+}
+
+async function startLive() {
+  if (!procedure) return;
+  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+    showProgress($("check-progress"), "This browser can't record from the camera. Try Chrome or Safari, or upload a video instead.", true);
+    return;
+  }
+  stopReplay();
+  try {
+    live.stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false,
+    });
+  } catch (err) {
+    showProgress($("check-progress"), "Camera access was blocked. Allow the camera for this site and try again.", true);
+    return;
+  }
+  let started;
+  try {
+    started = await api(`/api/procedures/${procedure.id}/live`, { method: "POST" });
+  } catch (err) {
+    live.stream.getTracks().forEach((t) => t.stop());
+    showProgress($("check-progress"), err.message, true);
+    return;
+  }
+  window.speechSynthesis?.speak(new SpeechSynthesisUtterance(""));  // unlock speech while we still have the click
+  live.session = started.session;
+  live.running = true;
+  live.queue = [];
+  $("check-progress").hidden = true;
+  $("report").hidden = true;
+  $("live").hidden = false;
+  $("live-badge").classList.remove("off");
+  $("live-badge").textContent = "Live";
+  $("live-video").srcObject = live.stream;
+  $("live-stop").disabled = false;
+  $("live-btn").disabled = true;
+  $("live-status").textContent = "Watching. Start the task whenever you're ready.";
+  renderLive(started.state);
+  $("live").scrollIntoView({ behavior: "smooth", block: "start" });
+  recordClip(pickMime());
+}
+
+async function stopLive() {
+  if (!live.running) return;
+  live.running = false;
+  $("live-stop").disabled = true;
+  $("live-status").textContent = "Checking the last few seconds…";
+  if (live.recorder?.state === "recording") live.recorder.stop();
+  await new Promise((r) => setTimeout(r, 300));
+  while (live.pending) await new Promise((r) => setTimeout(r, 200));
+  live.stream?.getTracks().forEach((t) => t.stop());
+  $("live-badge").classList.add("off");
+  $("live-badge").textContent = "Stopped";
+  try {
+    const r = await api(`/api/procedures/${procedure.id}/live/${live.session}/end`, { method: "POST" });
+    renderLive(r.state);
+    pushAlerts(r.alerts);
+    const ok = Object.values(r.state.status).filter((s) => s === "done").length;
+    $("live-status").textContent = `Session over: ${ok} of ${r.state.total} steps done right. `
+      + `${r.clips} moments checked for about $${r.cost_usd.toFixed(2)}.`;
+  } catch (err) {
+    $("live-status").textContent = err.message;
+  }
+  $("live-btn").disabled = false;
+}
+
+$("live-btn").onclick = startLive;
+$("live-stop").onclick = stopLive;
 
 (async () => {
   const samples = await api("/api/samples").catch(() => []);

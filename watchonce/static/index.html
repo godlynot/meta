@@ -46,9 +46,22 @@
     <div class="actions">
       <button class="button primary" type="button" id="attempt-btn">Upload attempt</button>
       <input type="file" accept="video/*" id="attempt-file" hidden>
+      <button class="button" type="button" id="live-btn">Coach me live</button>
       <span id="sample-attempts" class="actions"></span>
     </div>
     <div id="check-progress" class="progress" role="status" hidden></div>
+    <div id="live" class="stack" hidden>
+      <div class="player">
+        <video id="live-video" autoplay muted playsinline></video>
+        <div id="live-coach" class="coach" role="alert" hidden></div>
+        <span class="live-badge" id="live-badge">Live</span>
+      </div>
+      <div class="replay-row">
+        <button id="live-stop" class="button primary" type="button">Stop and see results</button>
+        <p id="live-status" class="hint" role="status"></p>
+      </div>
+      <ol id="live-steps" class="checklist"></ol>
+    </div>
     <div id="report" class="stack" hidden>
       <div class="scoreline">
         <div class="score" id="score"></div>

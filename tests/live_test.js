@@ -1,0 +1,39 @@
+// Live coaching test with a fake webcam that plays a flawed attempt.
+const { chromium } = require("playwright");
+const [BASE, Y4M] = process.argv.slice(2);
+const results = [];
+const check = (n, ok, d = "") => { results.push(!!ok); console.log(`${ok ? "PASS" : "FAIL"}  ${n}${!ok && d ? "  (" + JSON.stringify(d).slice(0, 400) + ")" : ""}`); };
+(async () => {
+  const browser = await chromium.launch({ args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", `--use-file-for-fake-video-capture=${Y4M}`] });
+  const ctx = await browser.newContext({ permissions: ["camera"] });
+  const page = await ctx.newPage();
+  const errors = []; page.on("pageerror", (e) => errors.push(e.message));
+  page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
+  await page.goto(BASE + "/?p=pack-the-tray", { waitUntil: "networkidle" });
+  await page.evaluate(() => { window.__spoken = []; window.speechSynthesis.speak = (u) => { if (u.text) window.__spoken.push(u.text); setTimeout(() => u.onend && u.onend(), 200); }; });
+  console.log("recorder mime:", await page.evaluate(() => pickMime()));
+  await page.click("#live-btn");
+  check("live panel opens with camera preview", await page.waitForSelector("#live:not([hidden])", { timeout: 10000 }).then(() => true).catch(() => false));
+  check("camera stream attached", await page.evaluate(() => !!document.getElementById("live-video").srcObject));
+  check("steps listed as not yet done", (await page.$$eval("#live-steps .stamp.pending", (e) => e.length)) >= 1);
+  // let two 8-second clips go by (the fake camera loops the 10-second attempt)
+  const firstAlert = await page.waitForFunction(() => window.__spoken.length > 0, null, { timeout: 60000 }).then(() => Date.now()).catch(() => null);
+  check("coach speaks up during the session", firstAlert);
+  await page.waitForTimeout(8000);
+  const banner = await page.evaluate(() => window.__spoken.slice());
+  await page.click("#live-stop");
+  await page.waitForFunction(() => /Session over/.test(document.getElementById("live-status").textContent), null, { timeout: 60000 }).catch(() => {});
+  const status = await page.textContent("#live-status");
+  check("stop gives a session summary", /Session over/.test(status), status);
+  const stamps = await page.$$eval("#live-steps li", (els) => els.map((li) => li.querySelector(".stamp").className.replace("stamp ", "")));
+  const spoken = await page.evaluate(() => window.__spoken);
+  console.log("final step states:", stamps);
+  console.log("spoken:", spoken);
+  check("skipped blue square flagged", stamps[1] === "skipped", stamps);
+  check("alerts mention step 2", spoken.some((t) => /step 2/i.test(t)), spoken);
+  check("camera released after stop", await page.evaluate(() => !live.stream || live.stream.getTracks().every((t) => t.readyState === "ended")));
+  check("start button usable again", await page.isEnabled("#live-btn"));
+  check("no console errors", errors.length === 0, errors);
+  console.log(`\n${results.filter(Boolean).length}/${results.length} passed`);
+  await browser.close();
+})();
