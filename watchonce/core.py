@@ -89,7 +89,10 @@ AUDIT_SCHEMA = {
     },
 }
 
-EXTRACT_PROMPT = """You are watching an expert perform a hands-on procedure while narrating it.
+EXTRACT_PROMPT = """You are watching a video of a hands-on procedure done correctly. It may be a raw
+recording of an expert or an edited tutorial, with or without narration or on-screen text.
+Ignore intros, outros, talking-head segments, sponsor messages and recaps; across jump cuts,
+treat the procedure as one continuous sequence.
 Break the procedure into its distinct, ordered steps. A step is a unit of work whose outcome
 matters to the result and stays visible: a part placed, a cable unplugged, a lid closed, a
 module pressed until it clicks. Incidental handling is never a step: picking up or putting
@@ -99,7 +102,8 @@ For each step give the time range in seconds where it happens, the physical obje
 (short noun phrases a segmentation model could find, most important first, e.g. "RAM stick",
 "slot latch"), and whether it is critical. Critical means skipping or botching it causes
 damage, injury or a failed result; most steps in a procedure are not critical.
-Use the narration to understand intent, but only include steps you can see being performed.
+Use narration and on-screen text to understand intent, but only include steps you can see
+being performed.
 Write titles as short imperatives ("Close both jars")."""
 
 REVIEW_PROMPT = """Below is a first draft of the steps in this procedure video. Watch the whole
@@ -126,7 +130,9 @@ reference steps below. Watch the trainee video and, for every reference step, de
 Give the time range in the trainee video where you saw it (null if skipped), the visual
 evidence for your decision, and a one-sentence fix for anything not "done" (empty if done).
 Also list any actions the trainee took that are not in the reference procedure.
-Be strict: only mark "done" if you actually see it happen.
+Be strict: only mark "done" if you actually see it happen. The trainee's setup may differ from
+the reference (another brand or model of the same thing, a different angle or lighting): judge
+whether each step's outcome was achieved, not whether it looks identical.
 
 Reference procedure:
 {procedure}"""

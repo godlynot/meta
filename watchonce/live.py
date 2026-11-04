@@ -42,7 +42,8 @@ OBSERVE_SCHEMA = {
 }
 
 OBSERVE_PROMPT = """You are watching a few seconds of live camera footage of a trainee doing
-a hands-on procedure. The reference steps are below.
+a hands-on procedure. The reference steps are below. The trainee's setup may differ from the
+reference (another model of the same thing, a different angle); judge the outcome of each step.
 Steps already seen completed earlier in the session: {done}.
 
 List every reference step you SEE being performed or completed in this clip, in the
