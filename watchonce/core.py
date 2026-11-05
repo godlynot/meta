@@ -159,6 +159,15 @@ def duration(path):
         raise VideoError("not a readable video file")
 
 
+def has_video(path):
+    r = subprocess.run(
+        ["ffprobe", "-v", "error", "-select_streams", "v", "-show_entries", "stream=index",
+         "-of", "csv=p=0", str(path)],
+        capture_output=True, text=True,
+    )
+    return bool(r.stdout.strip())
+
+
 def has_audio(path):
     r = subprocess.run(
         ["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries", "stream=index",
@@ -357,6 +366,9 @@ class Engine:
                 file_id, REVIEW_PROMPT.format(draft=json.dumps(draft, indent=2)), PROCEDURE_SCHEMA, "procedure")
             cost += review_cost
             procedure["draft_steps"] = len(draft["steps"])
+            if not procedure["steps"]:
+                raise VideoError("I couldn't find a hands-on task in that video. "
+                                 "Try one that clearly shows each step being done.")
         finally:
             await self.client.files.delete(file_id)
         _unslow(procedure["steps"], slow)

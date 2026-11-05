@@ -213,7 +213,8 @@ if ("speechSynthesis" in window) {
 
 // Spoken lines are phrased the way a person would say them, without step numbers.
 const lower = (t) => (t ? t.charAt(0).toLowerCase() + t.slice(1) : "");
-function spoken(kind, title, note) {
+function spoken(kind, title, note, count) {
+  if (kind === "summary") return `You never got to ${count} of the steps. They're listed on screen.`;
   if (kind === "skipped") return `Hold on, you skipped a step: ${lower(title)}.`;
   if (kind === "not_yet") return `Hold on, you haven't done this yet: ${lower(title)}.`;
   if (kind === "never") return `You never got to this step: ${lower(title)}.`;
@@ -333,11 +334,11 @@ async function speakQueue() {
   const coach = $("live-coach");
   while (live.queue.length) {
     const a = live.queue.shift();
-    const tag = a.kind === "incorrect" ? "Stop" : "Hold on";
+    const tag = a.kind === "incorrect" ? "Stop" : a.kind === "summary" ? "Missed" : "Hold on";
     coach.innerHTML = `<span class="tag">${esc(tag)}</span><strong>${esc(a.message)}</strong><span>${esc(a.title)}</span>`;
     coach.hidden = false;
-    const kind = a.kind === "incorrect" ? "incorrect" : /never/.test(a.message) ? "never" : "not_yet";
-    await Promise.all([say(spoken(kind, a.title, a.message)), linger(MIN_ALERT_MS)]);
+    const kind = a.kind === "incorrect" || a.kind === "summary" ? a.kind : /never/.test(a.message) ? "never" : "not_yet";
+    await Promise.all([say(spoken(kind, a.title, a.message, a.count)), linger(MIN_ALERT_MS)]);
     await linger(600);
   }
   coach.hidden = true;
@@ -436,6 +437,7 @@ async function stopLive() {
   live.running = false;
   $("live-stop").disabled = true;
   $("live-status").textContent = "Checking the last few seconds…";
+  let sawAnything = false;
   for (const rec of live.recorders) if (rec?.state === "recording") rec.stop();
   live.recorders = [];
   if (live.full?.rec.state === "recording") live.full.rec.stop();
@@ -448,15 +450,25 @@ async function stopLive() {
   try {
     const r = await api(`/api/procedures/${procedure.id}/live/${live.session}/end`, { method: "POST" });
     renderLive(r.state);
-    pushAlerts(r.alerts);
-    const ok = Object.values(r.state.status).filter((s) => s === "done").length;
-    $("live-status").textContent = `Session over: ${ok} of ${r.state.total} steps done right. `
-      + `${r.clips} moments checked for about $${r.cost_usd.toFixed(2)}.`;
+    sawAnything = r.state.done > 0;
+    if (!sawAnything) {
+      $("live-status").textContent = "I didn't see any of the steps. Point the camera at your hands and the task, then try again.";
+    } else {
+      const never = r.alerts.filter((a) => /never/.test(a.message));
+      const rest = r.alerts.filter((a) => !/never/.test(a.message));
+      pushAlerts(never.length > 1
+        ? [...rest, { kind: "summary", title: never.map((a) => a.title).join(" · "), message: `You never got to ${never.length} steps.`, count: never.length }]
+        : r.alerts);
+      const ok = Object.values(r.state.status).filter((s) => s === "done").length;
+      $("live-status").textContent = `Session over: ${ok} of ${r.state.total} steps done right. `
+        + `${r.clips} moments checked for about $${r.cost_usd.toFixed(2)}.`;
+    }
   } catch (err) {
     $("live-status").textContent = err.message;
   }
   // Live alerts are quick; the full review of the whole session is the thorough one.
-  const parts = live.full?.parts || [];
+  // Skip it when the coach saw nothing: there is nothing to review.
+  const parts = sawAnything ? live.full?.parts || [] : [];
   if (parts.length) {
     const type = live.full.rec.mimeType || live.full.type || "video/webm";
     const file = new File(parts, type.includes("mp4") ? "live-session.mp4" : "live-session.webm", { type });

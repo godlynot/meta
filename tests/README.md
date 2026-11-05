@@ -19,4 +19,9 @@ python tests/api_test.py http://localhost:8078 tests/media --limits
 
 # harder procedure: 12 steps, look-alike parts, distractor moves, planted mistakes
 python tests/make_complex.py tests/media/complex     # writes expert.mp4, attempt.mp4, truth.json
+
+# what a judge might try: correct runs must stay silent, idle cameras and quick stops stay quiet,
+# non-video uploads are rejected; FEEDS holds nutella_correct.y4m, tray_correct.y4m, idle.y4m,
+# blank.mp4, audio_only.m4a and clip.webm
+node tests/robustness.js http://localhost:8077 FEEDS
 ```

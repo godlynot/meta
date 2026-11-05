@@ -18,6 +18,7 @@ from .core import MODEL, PRICE_IN, PRICE_OUT, SAFE_INPUT, _ffmpeg
 # 8-second clip every 4 seconds), so most moments are seen twice.
 
 WRONG_VOTES = 2
+LIVE_QUALITY_ALERTS = False
 # A step only counts as done once two clips have seen it. Clips overlap, so a real
 # action is seen twice; one misread clip (opening a cover read as closing it) can't
 # make the coach think earlier steps were skipped.
@@ -89,7 +90,10 @@ class LiveCoach:
             sid = p.get("id")
             if sid not in self.titles:
                 continue  # the model named a step that isn't in the procedure
-            if not p.get("correct", True) and sid not in self.wrong:
+            # Live clips are a few seconds long, too little to judge how well a step was
+            # done (a correct run was once called wrong in testing), so live alerts only
+            # cover missing and out-of-order steps; the full review after Stop judges quality.
+            if LIVE_QUALITY_ALERTS and not p.get("correct", True) and sid not in self.wrong:
                 # Clips overlap, so every moment is seen twice: only call a step wrong
                 # when two clips agree. One clip's misreading stays quiet.
                 self.wrong_votes[sid] = self.wrong_votes.get(sid, 0) + 1

@@ -15,7 +15,7 @@ from fastapi import FastAPI, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from .core import Engine, VideoError, duration, normalize
+from .core import Engine, VideoError, duration, has_video, normalize
 from .live import LiveCoach, look
 
 HERE = Path(__file__).parent
@@ -134,6 +134,11 @@ async def prepare(raw: Path, dst: Path):
         raise VideoError("That file couldn't be read as a video. Try an MP4 or MOV straight from your phone.")
     finally:
         raw.unlink(missing_ok=True)
+    # Checked on our own converted file, before any model call is spent on it.
+    if not has_video(dst):
+        raise VideoError("That file has no picture in it. Upload a video of the task.")
+    if duration(dst) < 2:
+        raise VideoError("That video is too short. Upload one that shows the whole task.")
     if duration(dst) > MAX_VIDEO_S:
         raise VideoError(too_long_message())
 
