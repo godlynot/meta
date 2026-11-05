@@ -36,7 +36,7 @@ assembling them and leaves the jar open.
 |---|---|---|---|---|
 | Upload check (3 independent checks) | caught, 3/3 agree | caught, 3/3 and 2/3 | caught, 3/3 | none |
 | Same, with a **silent, edited tutorial** as the reference | caught, 3/3 | caught, 3/3 | caught, 3/3 | none |
-| Live coaching, final settings, 4 runs | 4/4 | 1/4 live; the review after Stop caught it | 4/4 | none |
+| Live coaching (current settings) | caught live | caught by the review after Stop | caught live | none: correct Nutella, tray and RAM runs played in as the webcam stayed silent |
 
 Robustness (tests/robustness.js and correct-attempt checks): a correct real run played into live
 mode as the webcam produces no alerts; correct attempts score 8/8, 4/4 and 5/5 on the Nutella, tray
