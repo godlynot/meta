@@ -18,6 +18,10 @@ from .core import MODEL, PRICE_IN, PRICE_OUT, SAFE_INPUT, _ffmpeg
 # 8-second clip every 4 seconds), so most moments are seen twice.
 
 WRONG_VOTES = 2
+# A step only counts as done once two clips have seen it. Clips overlap, so a real
+# action is seen twice; one misread clip (opening a cover read as closing it) can't
+# make the coach think earlier steps were skipped.
+DONE_VOTES = 2
 
 OBSERVE_SCHEMA = {
     "type": "object",
@@ -50,7 +54,10 @@ List every reference step you SEE being performed or completed in this clip, in 
 order it happens. A step that only fetches a tool counts as done if the tool is already
 in the trainee's hand. For every other step, only count it if you see the action itself.
 For each, say whether it was done correctly; if not, say what was wrong in a short note
-written to the trainee, describing only what you saw. Report only what is in
+written to the trainee, describing only what you saw. Steps usually happen in order:
+if an action could be either an early or a late step (opening or closing the same
+cover, removing or inserting the same part), prefer the one that comes next after the
+steps already completed. Report only what is in
 this clip; do not repeat steps from earlier unless they are clearly done again. Also give the id of the step the trainee seems
 to be working on at the end of the clip, or null if you can't tell.
 
@@ -69,6 +76,7 @@ class LiveCoach:
         self.flagged = set()    # earlier steps we already warned were skipped
         self.wrong = set()      # steps we already warned were done wrongly
         self.wrong_votes = {}   # step id -> how many clips reported it done wrongly
+        self.done_votes = {}    # step id -> how many clips saw it done
         self.working_on = None
 
     def _alert(self, kind, sid, message):
@@ -90,6 +98,9 @@ class LiveCoach:
                     alerts.append(self._alert("incorrect", sid, p.get("note") or f"Step {sid} isn't right."))
             if sid in self.done:
                 continue
+            self.done_votes[sid] = self.done_votes.get(sid, 0) + 1
+            if self.done_votes[sid] < DONE_VOTES:
+                continue
             missing = [s["id"] for s in self.steps
                        if s["id"] < sid and s["id"] not in self.done and s["id"] not in self.flagged]
             for m in missing:
@@ -101,7 +112,12 @@ class LiveCoach:
         return alerts
 
     def finish(self):
-        """At the end, every step never done is a miss (unless already flagged)."""
+        """At the end, every step never done is a miss (unless already flagged).
+        A step seen by only one clip still counts as done here: it may simply have
+        happened in the first or last few seconds, which only one clip covers."""
+        for s in self.steps:
+            if self.done_votes.get(s["id"]) and s["id"] not in self.done:
+                self.done.append(s["id"])
         alerts = [self._alert("skipped", s["id"], f"Step {s['id']} was never done: {s['title']}.")
                   for s in self.steps if s["id"] not in self.done and s["id"] not in self.flagged]
         self.flagged.update(a["id"] for a in alerts)
