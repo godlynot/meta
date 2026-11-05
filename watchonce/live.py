@@ -104,6 +104,9 @@ class LiveCoach:
             missing = [s["id"] for s in self.steps
                        if s["id"] < sid and s["id"] not in self.done and s["id"] not in self.flagged]
             for m in missing:
+                if self.done_votes.get(m):
+                    self.done.append(m)  # seen once (e.g. in the first seconds, covered by one clip): not skipped
+                    continue
                 self.flagged.add(m)
                 alerts.append(self._alert("skipped", m, f"Step {m} isn't done yet: {self.titles[m]}."))
             self.done.append(sid)
